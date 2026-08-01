@@ -1,0 +1,16 @@
+# Node
+node_modules/
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Environment
+.env
+.env.*
+
+# Expo / React Native artifacts
+.expo/
+.expo-shared/
+dist/
+web-build/
