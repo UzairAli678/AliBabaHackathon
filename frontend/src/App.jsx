@@ -1,14 +1,31 @@
-import { NavLink, Route, Routes } from 'react-router-dom';
+import { Navigate, NavLink, Route, Routes, useNavigate } from 'react-router-dom';
 import {
   BellAlertIcon,
   CalendarDaysIcon,
   ChartBarSquareIcon,
-  HeartIcon,
   HomeIcon,
   ShieldCheckIcon,
   SparklesIcon,
-  CurrencyDollarIcon
+  CurrencyDollarIcon,
+  UserCircleIcon,
+  ArrowRightOnRectangleIcon,
+  UserPlusIcon,
+  ArrowRightIcon
 } from '@heroicons/react/24/outline';
+import LogoMark from './components/LogoMark';
+import PlaceholderPage from './components/PlaceholderPage';
+import ProtectedRoute from './components/ProtectedRoute';
+import DashboardLayout from './layouts/DashboardLayout';
+import DashboardHome from './pages/Dashboard';
+import AssessmentPage from './pages/Assessment';
+import NavigatorPage from './pages/Navigator';
+import EmergencyPage from './pages/Emergency';
+import DashboardFeaturePage from './pages/DashboardFeaturePage';
+import ProfilePage from './pages/Profile';
+import SignInPage from './pages/SignInPage';
+import SignUpPage from './pages/SignUpPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import { AuthProvider, useAuth } from './context/AuthContext';
 
 const navItems = [
   { label: 'Home', to: '/', icon: HomeIcon },
@@ -70,22 +87,105 @@ function IconCard({ icon: Icon, title, description, tint, href }) {
   );
 }
 
+function NavAuthActions() {
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  if (!user) {
+    return (
+      <div className="flex items-center gap-3">
+        <NavLink
+          to="/signin"
+          className="inline-flex items-center gap-2 rounded-full border border-border bg-white px-4 py-2.5 text-sm font-medium text-heading transition hover:bg-slate-50"
+        >
+          <ArrowRightOnRectangleIcon className="h-4 w-4" />
+          Sign In
+        </NavLink>
+        <NavLink
+          to="/signup"
+          className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2.5 text-sm font-medium text-white shadow-soft transition hover:opacity-90"
+        >
+          <UserPlusIcon className="h-4 w-4" />
+          Sign Up
+        </NavLink>
+      </div>
+    );
+  }
+
+  const name = user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
+
+  return (
+    <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 rounded-full border border-border bg-white px-3 py-2 shadow-card">
+        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+          <UserCircleIcon className="h-5 w-5" />
+        </div>
+        <div className="hidden leading-tight sm:block">
+          <div className="text-sm font-medium text-heading">{name}</div>
+          <div className="text-xs text-muted">Signed in</div>
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={async () => {
+          await signOut();
+          navigate('/');
+        }}
+        className="inline-flex items-center gap-2 rounded-full bg-heading px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90"
+      >
+        <ArrowRightIcon className="h-4 w-4" />
+        Log out
+      </button>
+    </div>
+  );
+}
+
+function GuestOnlyRoute({ children }) {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return <div className="flex min-h-[60vh] items-center justify-center text-sm text-muted">Loading...</div>;
+  }
+
+  if (user) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return children;
+}
+
+function LandingRoute() {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return <div className="flex min-h-[60vh] items-center justify-center text-sm text-muted">Loading...</div>;
+  }
+
+  if (user) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return (
+    <Shell>
+      <HomePage />
+    </Shell>
+  );
+}
+
 function Shell({ children }) {
   return (
     <div className="min-h-screen bg-background text-text">
       <header className="sticky top-0 z-50 border-b border-border/70 bg-background/90 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
           <NavLink to="/" className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary text-white shadow-soft">
-              <HeartIcon className="h-6 w-6" />
-            </div>
+            <LogoMark className="h-10 w-auto" />
             <div>
               <div className="text-lg font-medium tracking-tight text-heading">CareLedger AI</div>
               <div className="text-xs text-muted">Hospital-grade guidance, simplified</div>
             </div>
           </NavLink>
 
-          <nav className="hidden items-center gap-2 md:flex">
+          <nav className="hidden items-center gap-2 xl:flex">
             {navItems.map(({ label, to, icon: Icon }) => (
               <NavLink
                 key={label}
@@ -102,13 +202,16 @@ function Shell({ children }) {
             ))}
           </nav>
 
-          <NavLink
-            to="/assessment"
-            className="inline-flex items-center gap-2 rounded-full bg-critical px-4 py-3 text-sm font-medium text-white shadow-soft transition hover:opacity-90"
-          >
-            <BellAlertIcon className="h-4 w-4" />
-            Emergency
-          </NavLink>
+          <div className="flex items-center gap-3">
+            <NavLink
+              to="/emergency"
+              className="hidden items-center gap-2 rounded-full bg-critical px-4 py-3 text-sm font-medium text-white shadow-soft transition hover:opacity-90 md:inline-flex"
+            >
+              <BellAlertIcon className="h-4 w-4" />
+              Emergency
+            </NavLink>
+            <NavAuthActions />
+          </div>
         </div>
       </header>
 
@@ -118,9 +221,7 @@ function Shell({ children }) {
         <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:px-6 lg:grid-cols-2 lg:px-8">
           <div>
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary text-white">
-                <HeartIcon className="h-5 w-5" />
-              </div>
+              <LogoMark className="h-8 w-auto" />
               <div className="text-lg font-medium tracking-tight text-heading">CareLedger AI</div>
             </div>
             <p className="mt-4 max-w-md text-sm leading-7 text-muted">
@@ -155,6 +256,8 @@ function Shell({ children }) {
 }
 
 function HomePage() {
+  const { user } = useAuth();
+
   return (
     <main>
       <section className="mx-auto grid max-w-7xl gap-12 px-4 py-16 sm:px-6 lg:grid-cols-[1.15fr_0.85fr] lg:px-8 lg:py-20">
@@ -171,7 +274,7 @@ function HomePage() {
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-4">
             <NavLink
-              to="/assessment"
+              to={user ? '/assessment' : '/signin'}
               className="inline-flex items-center rounded-full bg-primary px-6 py-3.5 text-sm font-medium text-white shadow-soft transition hover:opacity-90"
             >
               Check your symptoms
@@ -260,29 +363,61 @@ function HomePage() {
   );
 }
 
-function PlaceholderPage({ title }) {
+function AppRoutes() {
   return (
-    <main className="mx-auto flex max-w-4xl flex-col items-center px-4 py-20 text-center sm:px-6 lg:px-8">
-      <div className="rounded-full bg-tealSoft px-4 py-2 text-sm font-medium text-primary">Coming next</div>
-      <h1 className="mt-6 text-4xl font-medium tracking-tight text-heading">{title}</h1>
-      <p className="mt-4 max-w-2xl text-lg leading-8 text-muted">
-        This page is a placeholder for the next build phase, kept consistent with the premium CareLedger AI visual language.
-      </p>
-    </main>
+    <Routes>
+      <Route path="/" element={<LandingRoute />} />
+      <Route
+        path="/signin"
+        element={
+          <GuestOnlyRoute>
+            <SignInPage />
+          </GuestOnlyRoute>
+        }
+      />
+      <Route
+        path="/signup"
+        element={
+          <GuestOnlyRoute>
+            <SignUpPage />
+          </GuestOnlyRoute>
+        }
+      />
+      <Route
+        path="/forgot-password"
+        element={
+          <GuestOnlyRoute>
+            <ForgotPasswordPage />
+          </GuestOnlyRoute>
+        }
+      />
+      <Route
+        element={
+          <ProtectedRoute>
+            <DashboardLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route path="/dashboard" element={<DashboardHome />} />
+        <Route path="/assessment" element={<AssessmentPage />} />
+        <Route path="/navigator" element={<NavigatorPage />} />
+        <Route path="/emergency" element={<EmergencyPage />} />
+        <Route path="/cost" element={<DashboardFeaturePage title="Cost" />} />
+        <Route path="/affordability" element={<DashboardFeaturePage title="Treatment Affordability" />} />
+        <Route path="/appointments" element={<DashboardFeaturePage title="Appointments" />} />
+        <Route path="/chat" element={<DashboardFeaturePage title="AI Chat" />} />
+        <Route path="/roadmap" element={<DashboardFeaturePage title="Roadmap" />} />
+        <Route path="/profile" element={<ProfilePage />} />
+      </Route>
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }
 
 export default function App() {
   return (
-    <Shell>
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/assessment" element={<PlaceholderPage title="Assessment" />} />
-        <Route path="/navigator" element={<PlaceholderPage title="Care Navigator" />} />
-        <Route path="/cost" element={<PlaceholderPage title="Cost" />} />
-        <Route path="/appointments" element={<PlaceholderPage title="Appointments" />} />
-        <Route path="/roadmap" element={<PlaceholderPage title="Roadmap" />} />
-      </Routes>
-    </Shell>
+    <AuthProvider>
+      <AppRoutes />
+    </AuthProvider>
   );
 }
