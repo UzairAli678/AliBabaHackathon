@@ -6,6 +6,7 @@ import {
   CalendarDaysIcon,
   ChartBarSquareIcon,
   ChevronDownIcon,
+  BeakerIcon,
   HomeIcon,
   HeartIcon,
   ChatBubbleLeftRightIcon,
@@ -23,6 +24,7 @@ import { useAuth } from '../context/AuthContext';
 const sidebarNavItems = [
   { label: 'Dashboard', to: '/dashboard', icon: HomeIcon },
   { label: 'Health Assessment', to: '/assessment', icon: HeartIcon },
+  { label: 'Disease Prediction', to: '/disease-prediction', icon: BeakerIcon },
   { label: 'Smart Care Navigator', to: '/navigator', icon: SparklesIcon },
   { label: 'Cost Intelligence', to: '/cost', icon: WalletIcon },
   { label: 'Treatment Affordability', to: '/affordability', icon: ShieldCheckIcon },

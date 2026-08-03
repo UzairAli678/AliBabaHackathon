@@ -18,6 +18,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import DashboardLayout from './layouts/DashboardLayout';
 import DashboardHome from './pages/Dashboard';
 import AssessmentPage from './pages/Assessment';
+import DiseasePredictionPage from './pages/DiseasePrediction';
 import NavigatorPage from './pages/Navigator';
 import EmergencyPage from './pages/Emergency';
 import DashboardFeaturePage from './pages/DashboardFeaturePage';
@@ -400,6 +401,7 @@ function AppRoutes() {
       >
         <Route path="/dashboard" element={<DashboardHome />} />
         <Route path="/assessment" element={<AssessmentPage />} />
+        <Route path="/disease-prediction" element={<DiseasePredictionPage />} />
         <Route path="/navigator" element={<NavigatorPage />} />
         <Route path="/emergency" element={<EmergencyPage />} />
         <Route path="/cost" element={<DashboardFeaturePage title="Cost" />} />

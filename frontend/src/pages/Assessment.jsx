@@ -1,161 +1,160 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon, ArrowRightIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import CircularGauge from '../components/CircularGauge';
 
-const questions = [
+const assessmentQuestions = [
   {
-    id: 'severity',
-    title: 'How intense are your current symptoms?',
-    subtitle: 'Choose the option that best matches how you feel right now.',
+    id: 'symptomIntensity',
+    title: 'How intense is your main symptom right now?',
+    subtitle: 'Pick the option that best reflects how you feel today.',
     options: [
-      { id: 'none', label: 'No symptoms', score: 0, summary: 'No active symptoms reported.' },
-      { id: 'mild', label: 'Mild and manageable', score: 6, summary: 'Mild symptoms are present.' },
-      { id: 'moderate', label: 'Noticeable and distracting', score: 14, summary: 'Moderate symptoms are affecting daily comfort.' },
-      { id: 'severe', label: 'Severe or worsening', score: 26, summary: 'Symptoms are severe or worsening.' }
+      { label: 'Mild and easy to ignore', value: 'mild', points: 0 },
+      { label: 'Noticeable but manageable', value: 'moderate', points: 1 },
+      { label: 'Strong or hard to ignore', value: 'severe', points: 3 }
     ]
   },
   {
     id: 'breathing',
-    title: 'Are you having chest pain or trouble breathing?',
-    subtitle: 'These are important red-flag symptoms.',
+    title: 'Are you having trouble breathing or feeling chest tightness?',
+    subtitle: 'Breathing changes can raise the urgency of the check-in.',
     options: [
-      {
-        id: 'no',
-        label: 'No',
-        score: 0
-      },
-      {
-        id: 'yes',
-        label: 'Yes',
-        score: 45,
-        urgent: true,
-        summary: 'Breathing difficulty or chest pain.'
-      }
+      { label: 'No', value: 'none', points: 0 },
+      { label: 'Only during activity or mild exertion', value: 'light', points: 2 },
+      { label: 'Yes, at rest or it feels severe', value: 'severe', points: 5, urgent: true }
     ]
   },
   {
     id: 'fever',
-    title: 'How would you describe your temperature today?',
-    subtitle: 'Fever can change how quickly you should seek care.',
+    title: 'Do you have a fever or chills?',
+    subtitle: 'Temperature changes help separate routine symptoms from more serious ones.',
     options: [
-      { id: 'none', label: 'No fever', score: 0 },
-      { id: 'low', label: 'Low-grade fever', score: 6, summary: 'Low-grade fever.' },
-      { id: 'moderate', label: 'Fever', score: 12, summary: 'Fever is present.' },
-      { id: 'high', label: 'High fever', score: 20, summary: 'High fever.' }
+      { label: 'No fever or chills', value: 'none', points: 0 },
+      { label: 'Low-grade fever or mild chills', value: 'low', points: 2 },
+      { label: 'High fever or shaking chills', value: 'high', points: 4 }
     ]
   },
   {
-    id: 'duration',
-    title: 'How long have the symptoms been present?',
-    subtitle: 'Longer lasting symptoms deserve closer attention.',
+    id: 'hydration',
+    title: 'Can you keep fluids down?',
+    subtitle: 'Dehydration risk matters when nausea or vomiting is involved.',
     options: [
-      { id: 'under-day', label: 'Less than 24 hours', score: 2 },
-      { id: 'one-three', label: '1-3 days', score: 5 },
-      { id: 'four-seven', label: '4-7 days', score: 9 },
-      { id: 'over-week', label: 'More than 1 week', score: 14, summary: 'Symptoms have lasted more than a week.' }
-    ]
-  },
-  {
-    id: 'fluids',
-    title: 'How well are you keeping fluids down?',
-    subtitle: 'Hydration changes the urgency of care.',
-    options: [
-      { id: 'good', label: 'Well hydrated', score: 0 },
-      { id: 'somewhat', label: 'Somewhat limited', score: 4, summary: 'Fluid intake is somewhat limited.' },
-      { id: 'poor', label: 'Not keeping up', score: 10, summary: 'Fluid intake is not keeping up.' },
-      { id: 'none', label: 'Unable to keep fluids down', score: 18, urgent: true, summary: 'Unable to keep fluids down.' }
+      { label: 'Yes, no problem', value: 'yes', points: 0 },
+      { label: 'Some nausea or reduced appetite', value: 'some', points: 2 },
+      { label: 'No, vomiting or unable to drink', value: 'no', points: 5, urgent: true }
     ]
   },
   {
     id: 'dizziness',
-    title: 'Do you feel dizzy, faint, or confused?',
-    subtitle: 'These symptoms can signal that you should escalate care.',
+    title: 'Are you feeling dizzy, faint, or confused?',
+    subtitle: 'Lightheadedness can point to a higher-risk situation.',
     options: [
-      { id: 'no', label: 'No', score: 0 },
-      { id: 'mild', label: 'A little dizzy', score: 5, summary: 'Mild dizziness.' },
-      { id: 'recurring', label: 'Recurring dizziness', score: 14, summary: 'Recurring dizziness or lightheadedness.' },
-      { id: 'yes', label: 'I fainted or feel confused', score: 28, urgent: true, summary: 'Fainting or confusion.' }
+      { label: 'No', value: 'none', points: 0 },
+      { label: 'Occasional dizziness', value: 'occasional', points: 2 },
+      { label: 'Fainting, confusion, or trouble staying alert', value: 'severe', points: 5, urgent: true }
     ]
   },
   {
-    id: 'sleep',
-    title: 'How restful has your sleep been recently?',
-    subtitle: 'Sleep changes can affect recovery and resilience.',
+    id: 'duration',
+    title: 'How long have the symptoms been going on?',
+    subtitle: 'Longer lasting symptoms deserve closer attention.',
     options: [
-      { id: 'good', label: 'Restful', score: 0 },
-      { id: 'short', label: 'A bit short', score: 3, summary: 'Sleep has been a bit short.' },
-      { id: 'poor', label: 'Poor', score: 7, summary: 'Sleep quality has been poor.' },
-      { id: 'disrupted', label: 'Very disrupted', score: 12, summary: 'Sleep has been very disrupted.' }
+      { label: 'Less than a day', value: 'short', points: 0 },
+      { label: '1 to 3 days', value: 'medium', points: 1 },
+      { label: 'More than 3 days', value: 'long', points: 3 }
     ]
   },
   {
-    id: 'activity',
-    title: 'How much are symptoms affecting your usual activity?',
-    subtitle: 'This helps estimate how much care support may be useful.',
+    id: 'trend',
+    title: 'Are your symptoms improving or getting worse?',
+    subtitle: 'A worsening trend raises the level of concern.',
     options: [
-      { id: 'normal', label: 'No change', score: 0 },
-      { id: 'reduced', label: 'I am slowing down', score: 5, summary: 'Activity has been reduced.' },
-      { id: 'resting', label: 'Mostly resting', score: 10, summary: 'Mostly resting because of symptoms.' },
-      { id: 'unable', label: 'I cannot complete normal activities', score: 16, summary: 'Normal activities are difficult to complete.' }
+      { label: 'Improving', value: 'improving', points: 0 },
+      { label: 'About the same', value: 'stable', points: 1 },
+      { label: 'Getting worse', value: 'worsening', points: 3 }
     ]
   },
   {
-    id: 'conditions',
-    title: 'Do you have any chronic health conditions?',
-    subtitle: 'Ongoing conditions can change the level of follow-up you need.',
+    id: 'dailyActivity',
+    title: 'How much are your daily activities affected?',
+    subtitle: 'We use this to estimate how disruptive the symptoms are.',
     options: [
-      { id: 'none', label: 'None', score: 0 },
-      { id: 'one', label: 'One well-controlled condition', score: 6, summary: 'One well-controlled chronic condition.' },
-      { id: 'some', label: 'One condition is not well controlled', score: 14, summary: 'A condition is not well controlled.' },
-      { id: 'multiple', label: 'Multiple or complex conditions', score: 22, summary: 'Multiple or complex chronic conditions.' }
+      { label: 'Barely affected', value: 'light', points: 0 },
+      { label: 'Some tasks are harder', value: 'moderate', points: 1 },
+      { label: 'Most tasks are difficult', value: 'heavy', points: 3 }
+    ]
+  },
+  {
+    id: 'skinChanges',
+    title: 'Do you have rash, swelling, or unusual skin changes?',
+    subtitle: 'Skin changes can help separate minor issues from higher-risk ones.',
+    options: [
+      { label: 'No', value: 'none', points: 0 },
+      { label: 'Mild or localized changes', value: 'mild', points: 1 },
+      { label: 'Widespread rash or swelling', value: 'severe', points: 4, urgent: true }
     ]
   }
 ];
 
-function determineRisk(score) {
-  if (score >= 80) {
-    return { riskLevel: 'low', tone: 'positive', suggestion: 'Rest and monitor. Stay hydrated and keep an eye on any changes.' };
+function deriveSeverity(totalScore, hasUrgentFlag) {
+  if (hasUrgentFlag || totalScore >= 80) {
+    return {
+      severity: 'urgent',
+      tone: 'critical',
+      urgent: true,
+      suggestion: 'Use Emergency Mode or seek urgent medical care now, especially if the symptoms are worsening.'
+    };
   }
 
-  if (score >= 50) {
-    return { riskLevel: 'medium', tone: 'caution', suggestion: 'Consider consulting a doctor soon, especially if symptoms continue or worsen.' };
+  if (totalScore >= 60) {
+    return {
+      severity: 'high',
+      tone: 'critical',
+      urgent: false,
+      suggestion: 'Seek medical care soon. If symptoms escalate, move to Emergency Mode.'
+    };
   }
 
-  return { riskLevel: 'high', tone: 'critical', suggestion: 'Seek care soon. If symptoms are getting worse, use Emergency Mode right away.' };
+  if (totalScore >= 35) {
+    return {
+      severity: 'moderate',
+      tone: 'caution',
+      urgent: false,
+      suggestion: 'Consider booking a clinician visit soon and keep monitoring your symptoms.'
+    };
+  }
+
+  return {
+    severity: 'mild',
+    tone: 'positive',
+    urgent: false,
+    suggestion: 'Rest, hydrate, and monitor for changes. Book follow-up care if symptoms linger.'
+  };
 }
 
-function calculateAssessment(answers) {
-  let score = 100;
-  const symptomClues = [];
-  let urgent = false;
-
-  questions.forEach((question) => {
-    const selectedOption = question.options.find((option) => option.id === answers[question.id]);
-
-    if (!selectedOption) {
-      return;
-    }
-
-    score -= selectedOption.score;
-
-    if (selectedOption.summary) {
-      symptomClues.push(selectedOption.summary);
-    }
-
-    if (selectedOption.urgent) {
-      urgent = true;
-    }
+function buildAssessmentResult(answers) {
+  const answerEntries = assessmentQuestions.map((question) => {
+    const selectedOption = question.options.find((option) => option.value === answers[question.id]) || question.options[0];
+    return {
+      question: question.title,
+      answer: selectedOption.label,
+      urgent: Boolean(selectedOption.urgent),
+      points: selectedOption.points
+    };
   });
 
-  score = Math.max(0, Math.min(100, score));
-  const risk = determineRisk(score);
+  const maxPoints = assessmentQuestions.reduce((sum, question) => {
+    return sum + Math.max(...question.options.map((option) => option.points));
+  }, 0);
+  const totalPoints = answerEntries.reduce((sum, entry) => sum + entry.points, 0);
+  const score = Math.round((totalPoints / maxPoints) * 100);
+  const urgentFlag = answerEntries.some((entry) => entry.urgent);
+  const severityResult = deriveSeverity(score, urgentFlag);
 
   return {
     score,
-    urgent: urgent || score < 30,
-    symptoms: symptomClues.length > 0 ? symptomClues : ['General symptoms and wellness review.'],
-    ...risk
+    ...severityResult,
+    answers: answerEntries
   };
 }
 
@@ -163,52 +162,17 @@ export default function AssessmentPage() {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState({});
-  const [selectedOptionId, setSelectedOptionId] = useState('');
   const [result, setResult] = useState(null);
 
-  const currentQuestion = questions[currentStep];
-  const progressPercent = Math.round(((currentStep + 1) / questions.length) * 100);
-  const isFinalStep = currentStep === questions.length - 1;
+  const totalSteps = assessmentQuestions.length;
+  const currentQuestion = assessmentQuestions[currentStep];
+  const selectedValue = answers[currentQuestion.id] || '';
+  const progressPercent = Math.round(((currentStep + 1) / totalSteps) * 100);
+  const isFinalStep = currentStep === totalSteps - 1;
 
-  useEffect(() => {
-    setSelectedOptionId(answers[currentQuestion.id] || '');
-  }, [answers, currentQuestion.id]);
-
-  const handleOptionSelect = (optionId) => {
-    setSelectedOptionId(optionId);
-  };
-
-  const handleContinue = () => {
-    if (!selectedOptionId) {
-      return;
-    }
-
-    const nextAnswers = {
-      ...answers,
-      [currentQuestion.id]: selectedOptionId
-    };
-
-    setAnswers(nextAnswers);
-
-    if (isFinalStep) {
-      setResult(calculateAssessment(nextAnswers));
-      return;
-    }
-
-    setCurrentStep((step) => step + 1);
-  };
-
-  const handleBack = () => {
-    setResult(null);
-    setCurrentStep((step) => Math.max(0, step - 1));
-  };
-
-  const handleRestart = () => {
-    setCurrentStep(0);
-    setAnswers({});
-    setSelectedOptionId('');
-    setResult(null);
-  };
+  const selectedAnswer = useMemo(() => {
+    return currentQuestion.options.find((option) => option.value === selectedValue) || null;
+  }, [currentQuestion, selectedValue]);
 
   const assessmentPayload = useMemo(() => {
     if (!result) {
@@ -217,18 +181,50 @@ export default function AssessmentPage() {
 
     return {
       score: result.score,
-      riskLevel: result.riskLevel,
-      urgency: result.urgent ? 'immediate' : result.riskLevel === 'high' ? 'needs attention' : result.riskLevel === 'medium' ? 'needs attention' : 'mild',
+      riskLevel: result.severity,
+      urgency: result.urgent ? 'immediate' : result.severity === 'high' ? 'needs attention' : result.severity === 'moderate' ? 'needs attention' : 'mild',
       suggestion: result.suggestion,
-      symptoms: result.symptoms
+      symptoms: result.answers.map((entry) => `${entry.question}: ${entry.answer}`),
+      topDisease: 'Quick check-in summary'
     };
   }, [result]);
 
+  const handleOptionSelect = (option) => {
+    setAnswers((current) => ({
+      ...current,
+      [currentQuestion.id]: option.value
+    }));
+  };
+
+  const handleContinue = () => {
+    if (!selectedAnswer) {
+      return;
+    }
+
+    if (isFinalStep) {
+      setResult(buildAssessmentResult(answers));
+      return;
+    }
+
+    setCurrentStep((step) => step + 1);
+  };
+
+  const handleBack = () => {
+    setCurrentStep((step) => Math.max(0, step - 1));
+  };
+
+  const handleRestart = () => {
+    setCurrentStep(0);
+    setAnswers({});
+    setResult(null);
+  };
+
   if (result && assessmentPayload) {
     const riskColors = {
-      low: 'text-positive bg-mintSoft border-green-200',
-      medium: 'text-caution bg-amberSoft border-amber-200',
-      high: 'text-critical bg-rose-50 border-red-200'
+      mild: 'text-positive bg-mintSoft border-green-200',
+      moderate: 'text-caution bg-amberSoft border-amber-200',
+      high: 'text-critical bg-rose-50 border-red-200',
+      urgent: 'text-critical bg-rose-50 border-red-200'
     };
 
     return (
@@ -236,12 +232,12 @@ export default function AssessmentPage() {
         <section className="rounded-[28px] border border-border bg-white p-6 shadow-card sm:p-8">
           <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
             <div className="max-w-xl space-y-4">
-              <div className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium ${riskColors[result.riskLevel]}`}>
-                {result.riskLevel.charAt(0).toUpperCase() + result.riskLevel.slice(1)} risk
+              <div className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium ${riskColors[result.severity]}`}>
+                {result.severity.charAt(0).toUpperCase() + result.severity.slice(1)} severity
               </div>
               <h2 className="text-3xl font-medium tracking-tight text-heading sm:text-4xl">Assessment complete</h2>
               <p className="text-sm leading-7 text-muted">
-                Based on your answers, here is a quick summary of your current health risk and the safest next step.
+                Based on your answers, here is a quick summary of your current risk level and the safest next step.
               </p>
               <div className="rounded-3xl bg-slate-50 p-5 text-sm leading-7 text-heading">
                 <div className="font-medium text-heading">Suggested next step</div>
@@ -250,7 +246,7 @@ export default function AssessmentPage() {
             </div>
 
             <div className="flex justify-center">
-              <CircularGauge value={result.score} label="Health score" tone={result.tone} />
+              <CircularGauge value={result.score} label="Risk score" tone={result.tone} />
             </div>
           </div>
         </section>
@@ -286,8 +282,8 @@ export default function AssessmentPage() {
           </section>
         ) : null}
 
-        {result.riskLevel === 'high' && !result.urgent ? (
-          <div className="rounded-[28px] border border-red-200 bg-white p-6 shadow-card">
+        {result.severity === 'high' && !result.urgent ? (
+          <section className="rounded-[28px] border border-red-200 bg-white p-6 shadow-card">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <div className="text-lg font-medium tracking-tight text-heading">Next care options are available</div>
@@ -301,31 +297,28 @@ export default function AssessmentPage() {
                 View care options
               </Link>
             </div>
-          </div>
+          </section>
         ) : null}
 
         <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
           <div className="rounded-[28px] border border-border bg-white p-6 shadow-card sm:p-8">
             <div className="text-sm font-medium uppercase tracking-[0.2em] text-primary">Responses</div>
             <div className="mt-4 space-y-3 text-sm leading-7 text-muted">
-              {questions.map((question) => {
-                const selectedOption = question.options.find((option) => option.id === answers[question.id]);
-                return (
-                  <div key={question.id} className="rounded-2xl bg-slate-50 p-4">
-                    <div className="font-medium text-heading">{question.title}</div>
-                    <div className="mt-1">{selectedOption?.label || 'Not answered'}</div>
-                  </div>
-                );
-              })}
+              {result.answers.map((entry) => (
+                <div key={entry.question} className="rounded-2xl bg-slate-50 p-4">
+                  <div className="font-medium text-heading">{entry.question}</div>
+                  <div className="mt-1">{entry.answer}</div>
+                </div>
+              ))}
             </div>
           </div>
 
           <div className="rounded-[28px] border border-border bg-white p-6 shadow-card sm:p-8">
             <div className="text-sm font-medium uppercase tracking-[0.2em] text-primary">Your notes</div>
             <ul className="mt-4 space-y-3 text-sm leading-7 text-muted">
-              {result.symptoms.map((symptom) => (
-                <li key={symptom} className="rounded-2xl bg-slate-50 p-4 text-heading">
-                  {symptom}
+              {result.answers.map((entry) => (
+                <li key={entry.question} className="rounded-2xl bg-slate-50 p-4 text-heading">
+                  {entry.answer}
                 </li>
               ))}
             </ul>
@@ -350,11 +343,11 @@ export default function AssessmentPage() {
             <div className="text-sm font-medium uppercase tracking-[0.2em] text-primary">Health Assessment</div>
             <h2 className="mt-2 text-3xl font-medium tracking-tight text-heading">Quick check-in</h2>
             <p className="mt-2 text-sm leading-7 text-muted">
-              Answer a few multiple-choice questions to estimate your health score and the safest next step.
+              Answer 9 short questions to get a risk score, severity level, and suggested next step.
             </p>
           </div>
           <div className="text-right text-sm text-muted">
-            <div className="font-medium text-heading">Question {currentStep + 1} of {questions.length}</div>
+            <div className="font-medium text-heading">Question {currentStep + 1} of {totalSteps}</div>
             <div className="mt-1">{progressPercent}% complete</div>
           </div>
         </div>
@@ -367,15 +360,15 @@ export default function AssessmentPage() {
           <h3 className="text-2xl font-medium tracking-tight text-heading">{currentQuestion.title}</h3>
           <p className="mt-2 max-w-2xl text-sm leading-7 text-muted">{currentQuestion.subtitle}</p>
 
-          <div className="mt-6 grid gap-3">
+          <div className="mt-6 grid gap-3 sm:grid-cols-1 lg:grid-cols-1">
             {currentQuestion.options.map((option) => {
-              const isSelected = selectedOptionId === option.id;
+              const isSelected = selectedAnswer?.value === option.value;
 
               return (
                 <button
-                  key={option.id}
+                  key={option.value}
                   type="button"
-                  onClick={() => handleOptionSelect(option.id)}
+                  onClick={() => handleOptionSelect(option)}
                   className={`rounded-2xl border px-4 py-4 text-left text-sm font-medium transition ${
                     isSelected
                       ? 'border-primary bg-white text-heading shadow-card'
@@ -386,6 +379,11 @@ export default function AssessmentPage() {
                 </button>
               );
             })}
+          </div>
+
+          <div className="mt-5 rounded-2xl bg-white px-4 py-3 text-sm text-muted">
+            Selected answer:{' '}
+            <span className="font-medium text-heading">{selectedAnswer ? selectedAnswer.label : 'none yet'}</span>
           </div>
         </div>
 
@@ -402,7 +400,7 @@ export default function AssessmentPage() {
           <button
             type="button"
             onClick={handleContinue}
-            disabled={!selectedOptionId}
+            disabled={!selectedAnswer}
             className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-medium text-white shadow-soft transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isFinalStep ? 'See results' : 'Continue'}

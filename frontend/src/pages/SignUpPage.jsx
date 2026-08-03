@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { hasSupabaseConfig, supabase } from '../lib/supabase';
+import { getAuthRedirectUrl, hasSupabaseConfig, supabase } from '../lib/supabase';
 import AuthLayout from '../components/AuthLayout';
 import AuthDivider from '../components/AuthDivider';
 import GoogleIcon from '../components/GoogleIcon';
@@ -27,6 +27,15 @@ export default function SignUpPage() {
 
     if (lowerMessage.includes('password should be at least')) {
       return 'Password must be at least 6 characters.';
+    }
+
+    if (
+      lowerMessage.includes('provider not enabled') ||
+      lowerMessage.includes('email/password') ||
+      lowerMessage.includes('signup is disabled') ||
+      lowerMessage.includes('forbidden')
+    ) {
+      return 'Email/password sign-up is currently unavailable in this Supabase project. Please enable Email/Password in Supabase Auth settings or use Continue with Google.';
     }
 
     return errorMessage;
@@ -89,7 +98,11 @@ export default function SignUpPage() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/dashboard`
+        redirectTo: getAuthRedirectUrl('/dashboard'),
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent'
+        }
       }
     });
 

@@ -83,6 +83,7 @@ function buildGuidance(urgency) {
 export default function NavigatorPage() {
   const location = useLocation();
   const assessment = location.state?.assessment || null;
+  const passedSpecialist = location.state?.specialist || null;
   const [symptomText, setSymptomText] = useState(assessment?.symptoms?.join(', ') || '');
   const [selectedPreset, setSelectedPreset] = useState('');
 
@@ -92,7 +93,7 @@ export default function NavigatorPage() {
   }, [assessment?.symptoms, selectedPreset, symptomText]);
 
   const urgency = assessment?.urgency || inferUrgency(sourceText);
-  const specialist = assessment?.suggestedSpecialist || inferSpecialist(sourceText);
+  const specialist = passedSpecialist || assessment?.suggestedSpecialist || inferSpecialist(sourceText);
   const guidance = buildGuidance(urgency);
 
   const summaryText = assessment

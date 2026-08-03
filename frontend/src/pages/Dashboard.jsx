@@ -3,6 +3,7 @@ import {
   CalendarDaysIcon,
   ChatBubbleLeftRightIcon,
   ChartBarSquareIcon,
+  BeakerIcon,
   HeartIcon,
   ShieldCheckIcon,
   SparklesIcon,
@@ -18,6 +19,13 @@ const featureCards = [
     to: '/assessment',
     icon: HeartIcon,
     tint: 'bg-teal-50'
+  },
+  {
+    title: 'Disease Prediction',
+    description: 'Search symptoms and see likely conditions from the AI model.',
+    to: '/disease-prediction',
+    icon: BeakerIcon,
+    tint: 'bg-violet-50'
   },
   {
     title: 'Smart Care Navigator',

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { hasSupabaseConfig, supabase } from '../lib/supabase';
+import { getAuthRedirectUrl, hasSupabaseConfig, supabase } from '../lib/supabase';
 import AuthLayout from '../components/AuthLayout';
 import AuthDivider from '../components/AuthDivider';
 import GoogleIcon from '../components/GoogleIcon';
@@ -17,12 +17,21 @@ export default function SignInPage() {
   const explainSigninError = (errorMessage) => {
     const lowerMessage = errorMessage.toLowerCase();
 
-    if (lowerMessage.includes('invalid login credentials')) {
-      return 'Invalid login credentials. If you just signed up, confirm your email first. If this email was already registered, use Forgot password to reset it.';
+    if (lowerMessage.includes('invalid login credentials') || lowerMessage.includes('user not found')) {
+      return 'Invalid email or password. If this account was created with Google, use Continue with Google instead. If you need a password-based login, reset it from the forgot-password flow.';
     }
 
     if (lowerMessage.includes('email not confirmed')) {
       return 'Please confirm your email using the verification link sent by Supabase, then sign in again.';
+    }
+
+    if (
+      lowerMessage.includes('provider not enabled') ||
+      lowerMessage.includes('email/password') ||
+      lowerMessage.includes('signup is disabled') ||
+      lowerMessage.includes('forbidden')
+    ) {
+      return 'Email/password authentication is currently unavailable in this Supabase project. Please enable Email/Password in Supabase Auth settings or use Continue with Google.';
     }
 
     return errorMessage;
@@ -74,7 +83,11 @@ export default function SignInPage() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/dashboard`
+        redirectTo: getAuthRedirectUrl('/dashboard'),
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent'
+        }
       }
     });
 
