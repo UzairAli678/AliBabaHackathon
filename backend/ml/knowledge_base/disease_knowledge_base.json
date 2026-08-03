@@ -1,0 +1,289 @@
+{
+  "(vertigo) Paroymsal  Positional Vertigo": {
+    "symptoms": ["spinning_movements", "vomiting", "dizziness", "loss_of_balance"],
+    "specialist": "Neurologist",
+    "severity": "Moderate",
+    "description": "A vertigo condition that causes brief episodes of spinning dizziness triggered by head movement.",
+    "emergency": false
+  },
+  "AIDS": {
+    "symptoms": ["extra_marital_contacts", "weight_loss", "muscle_wasting", "malaise"],
+    "specialist": "Infectious Disease Specialist",
+    "severity": "High",
+    "description": "A chronic viral infection that weakens the immune system over time.",
+    "emergency": false
+  },
+  "Acne": {
+    "symptoms": ["pus_filled_pimples", "blackheads", "scurring", "skin_peeling"],
+    "specialist": "Dermatologist",
+    "severity": "Low",
+    "description": "A common skin condition involving clogged pores and inflammatory lesions.",
+    "emergency": false
+  },
+  "Alcoholic hepatitis": {
+    "symptoms": ["history_of_alcohol_consumption", "yellowish_skin", "dark_urine", "abdominal_pain"],
+    "specialist": "Gastroenterologist",
+    "severity": "High",
+    "description": "Inflammation of the liver caused by heavy alcohol use.",
+    "emergency": false
+  },
+  "Allergy": {
+    "symptoms": ["continuous_sneezing", "watering_from_eyes", "runny_nose", "itching"],
+    "specialist": "Allergist",
+    "severity": "Low",
+    "description": "An immune reaction to substances such as pollen, dust, or food.",
+    "emergency": false
+  },
+  "Arthritis": {
+    "symptoms": ["joint_pain", "swelling_joints", "movement_stiffness", "painful_walking"],
+    "specialist": "Rheumatologist",
+    "severity": "Moderate",
+    "description": "Inflammation of joints leading to pain, stiffness, and reduced mobility.",
+    "emergency": false
+  },
+  "Bronchial Asthma": {
+    "symptoms": ["breathlessness", "cough", "chest_pain", "high_fever"],
+    "specialist": "Pulmonologist",
+    "severity": "High",
+    "description": "A chronic airway condition that makes breathing difficult.",
+    "emergency": true
+  },
+  "Cervical spondylosis": {
+    "symptoms": ["neck_pain", "stiff_neck", "dizziness", "loss_of_balance"],
+    "specialist": "Orthopedic Specialist",
+    "severity": "Moderate",
+    "description": "Wear-and-tear changes in the cervical spine that can cause neck pain and stiffness.",
+    "emergency": false
+  },
+  "Chicken pox": {
+    "symptoms": ["skin_rash", "itching", "mild_fever", "fatigue"],
+    "specialist": "Dermatologist",
+    "severity": "Moderate",
+    "description": "A contagious viral infection that causes an itchy blister-like rash.",
+    "emergency": false
+  },
+  "Chronic cholestasis": {
+    "symptoms": ["yellowish_skin", "itching", "dark_urine", "abdominal_pain"],
+    "specialist": "Gastroenterologist",
+    "severity": "High",
+    "description": "A chronic reduction in bile flow that can cause jaundice and itching.",
+    "emergency": false
+  },
+  "Common Cold": {
+    "symptoms": ["continuous_sneezing", "runny_nose", "congestion", "mild_fever"],
+    "specialist": "General Physician",
+    "severity": "Low",
+    "description": "A viral upper respiratory infection that usually improves with rest and fluids.",
+    "emergency": false
+  },
+  "Dengue": {
+    "symptoms": ["high_fever", "headache", "joint_pain", "rash"],
+    "specialist": "Infectious Disease Specialist",
+    "severity": "High",
+    "description": "A mosquito-borne viral illness that can become severe if not monitored carefully.",
+    "emergency": false
+  },
+  "Diabetes ": {
+    "symptoms": ["excessive_hunger", "polyuria", "fatigue", "weight_loss"],
+    "specialist": "Endocrinologist",
+    "severity": "High",
+    "description": "A metabolic condition characterized by elevated blood sugar.",
+    "emergency": false
+  },
+  "Dimorphic hemmorhoids(piles)": {
+    "symptoms": ["pain_during_bowel_movements", "pain_in_anal_region", "bloody_stool", "irritation_in_anus"],
+    "specialist": "Colorectal Surgeon",
+    "severity": "Moderate",
+    "description": "Swollen veins in the rectal area that can cause pain and bleeding.",
+    "emergency": false
+  },
+  "Drug Reaction": {
+    "symptoms": ["skin_rash", "vomiting", "nausea", "irritability"],
+    "specialist": "Dermatologist",
+    "severity": "Moderate",
+    "description": "An adverse reaction to a medication that may affect the skin or other organs.",
+    "emergency": false
+  },
+  "Fungal infection": {
+    "symptoms": ["itching", "skin_rash", "nodal_skin_eruptions", "skin_peeling"],
+    "specialist": "Dermatologist",
+    "severity": "Low",
+    "description": "A fungal skin infection commonly presenting with itchy rashes and irritation.",
+    "emergency": false
+  },
+  "GERD": {
+    "symptoms": ["acidity", "abdominal_pain", "heartburn", "vomiting"],
+    "specialist": "Gastroenterologist",
+    "severity": "Moderate",
+    "description": "Gastroesophageal reflux disease, where stomach acid flows back into the esophagus.",
+    "emergency": false
+  },
+  "Gastroenteritis": {
+    "symptoms": ["vomiting", "diarrhoea", "nausea", "abdominal_pain"],
+    "specialist": "Gastroenterologist",
+    "severity": "Moderate",
+    "description": "Inflammation of the stomach and intestines causing vomiting and diarrhea.",
+    "emergency": false
+  },
+  "Heart attack": {
+    "symptoms": ["chest_pain", "breathlessness", "fast_heart_rate", "sweating"],
+    "specialist": "Cardiologist",
+    "severity": "Emergency",
+    "description": "A medical emergency caused by blocked blood flow to the heart muscle.",
+    "emergency": true
+  },
+  "Hepatitis B": {
+    "symptoms": ["yellowish_skin", "dark_urine", "fatigue", "abdominal_pain"],
+    "specialist": "Gastroenterologist",
+    "severity": "High",
+    "description": "A viral liver infection that can become chronic and cause liver damage.",
+    "emergency": false
+  },
+  "Hepatitis C": {
+    "symptoms": ["yellowish_skin", "dark_urine", "fatigue", "abdominal_pain"],
+    "specialist": "Gastroenterologist",
+    "severity": "High",
+    "description": "A viral liver infection that can cause long-term liver complications.",
+    "emergency": false
+  },
+  "Hepatitis D": {
+    "symptoms": ["yellowish_skin", "dark_urine", "fatigue", "abdominal_pain"],
+    "specialist": "Gastroenterologist",
+    "severity": "High",
+    "description": "A liver infection that occurs in people already infected with hepatitis B.",
+    "emergency": false
+  },
+  "Hepatitis E": {
+    "symptoms": ["yellowish_skin", "dark_urine", "fatigue", "abdominal_pain"],
+    "specialist": "Gastroenterologist",
+    "severity": "High",
+    "description": "A viral liver infection often spread through contaminated water.",
+    "emergency": false
+  },
+  "Hypertension ": {
+    "symptoms": ["headache", "chest_pain", "dizziness", "fast_heart_rate"],
+    "specialist": "Cardiologist",
+    "severity": "High",
+    "description": "Persistently elevated blood pressure that can increase cardiovascular risk.",
+    "emergency": false
+  },
+  "Hyperthyroidism": {
+    "symptoms": ["excessive_hunger", "irritability", "fast_heart_rate", "weight_loss"],
+    "specialist": "Endocrinologist",
+    "severity": "Moderate",
+    "description": "An overactive thyroid gland that speeds up many body functions.",
+    "emergency": false
+  },
+  "Hypoglycemia": {
+    "symptoms": ["excessive_hunger", "sweating", "dizziness", "irritability"],
+    "specialist": "Endocrinologist",
+    "severity": "Emergency",
+    "description": "A low blood sugar condition that can become dangerous if severe.",
+    "emergency": true
+  },
+  "Hypothyroidism": {
+    "symptoms": ["weight_gain", "fatigue", "lethargy", "mood_swings"],
+    "specialist": "Endocrinologist",
+    "severity": "Moderate",
+    "description": "A condition in which the thyroid gland produces insufficient hormones.",
+    "emergency": false
+  },
+  "Impetigo": {
+    "symptoms": ["skin_rash", "blister", "yellow_crust_ooze", "red_sore_around_nose"],
+    "specialist": "Dermatologist",
+    "severity": "Low",
+    "description": "A contagious bacterial skin infection that causes sores and crusting.",
+    "emergency": false
+  },
+  "Jaundice": {
+    "symptoms": ["yellowish_skin", "yellowing_of_eyes", "dark_urine", "abdominal_pain"],
+    "specialist": "Gastroenterologist",
+    "severity": "High",
+    "description": "Yellowing of the skin and eyes caused by elevated bilirubin.",
+    "emergency": false
+  },
+  "Malaria": {
+    "symptoms": ["high_fever", "chills", "sweating", "headache"],
+    "specialist": "Infectious Disease Specialist",
+    "severity": "High",
+    "description": "A mosquito-borne infectious disease that can cause cyclical fever and chills.",
+    "emergency": false
+  },
+  "Migraine": {
+    "symptoms": ["headache", "nausea", "vomiting", "blurred_and_distorted_vision"],
+    "specialist": "Neurologist",
+    "severity": "Moderate",
+    "description": "A recurrent headache disorder that can be accompanied by nausea and visual symptoms.",
+    "emergency": false
+  },
+  "Osteoarthristis": {
+    "symptoms": ["joint_pain", "swelling_joints", "painful_walking", "movement_stiffness"],
+    "specialist": "Orthopedic Specialist",
+    "severity": "Moderate",
+    "description": "A degenerative joint condition that causes pain and stiffness.",
+    "emergency": false
+  },
+  "Paralysis (brain hemorrhage)": {
+    "symptoms": ["weakness_of_one_body_side", "slurred_speech", "loss_of_balance", "severe_headache"],
+    "specialist": "Neurologist",
+    "severity": "Emergency",
+    "description": "A serious neurological condition that can cause sudden weakness or paralysis.",
+    "emergency": true
+  },
+  "Peptic ulcer diseae": {
+    "symptoms": ["stomach_pain", "vomiting", "abdominal_pain", "acidity"],
+    "specialist": "Gastroenterologist",
+    "severity": "Moderate",
+    "description": "An ulcer in the stomach or upper intestine that can cause pain and digestive symptoms.",
+    "emergency": false
+  },
+  "Pneumonia": {
+    "symptoms": ["breathlessness", "chest_pain", "cough", "high_fever"],
+    "specialist": "Pulmonologist",
+    "severity": "High",
+    "description": "An infection that inflames the air sacs in one or both lungs.",
+    "emergency": true
+  },
+  "Psoriasis": {
+    "symptoms": ["skin_rash", "silver_like_dusting", "skin_peeling", "itching"],
+    "specialist": "Dermatologist",
+    "severity": "Moderate",
+    "description": "A chronic inflammatory skin disease causing scaly plaques.",
+    "emergency": false
+  },
+  "Tuberculosis": {
+    "symptoms": ["cough", "breathlessness", "chest_pain", "weight_loss"],
+    "specialist": "Pulmonologist",
+    "severity": "High",
+    "description": "A contagious bacterial infection that commonly affects the lungs.",
+    "emergency": true
+  },
+  "Typhoid": {
+    "symptoms": ["high_fever", "abdominal_pain", "vomiting", "loss_of_appetite"],
+    "specialist": "Infectious Disease Specialist",
+    "severity": "High",
+    "description": "A bacterial infection that can cause high fever and abdominal symptoms.",
+    "emergency": false
+  },
+  "Urinary tract infection": {
+    "symptoms": ["burning_micturition", "foul_smell_of urine", "continuous_feel_of_urine", "bladder_discomfort"],
+    "specialist": "Urologist",
+    "severity": "Moderate",
+    "description": "An infection in the urinary system that can cause pain and frequent urination.",
+    "emergency": false
+  },
+  "Varicose veins": {
+    "symptoms": ["prominent_veins_on_calf", "painful_walking", "swollen_legs", "swollen_blood_vessels"],
+    "specialist": "Vascular Surgeon",
+    "severity": "Low",
+    "description": "Enlarged, twisted veins that often affect the legs.",
+    "emergency": false
+  },
+  "hepatitis A": {
+    "symptoms": ["yellowish_skin", "dark_urine", "vomiting", "abdominal_pain"],
+    "specialist": "Gastroenterologist",
+    "severity": "High",
+    "description": "A viral liver infection usually spread through contaminated food or water.",
+    "emergency": false
+  }
+}

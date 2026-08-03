@@ -61,15 +61,43 @@ function inferSpecialistForDisease(disease) {
 }
 
 function confidenceToTone(confidence) {
-  if (confidence >= 75) {
-    return 'critical';
+  if (confidence > 70) {
+    return 'positive';
   }
 
-  if (confidence >= 50) {
-    return 'caution';
+  if (confidence >= 40) {
+    return 'primary';
   }
 
-  return 'positive';
+  return 'caution';
+}
+
+function getConfidenceLabel(confidence) {
+  if (confidence > 70) {
+    return 'High confidence';
+  }
+
+  if (confidence >= 40) {
+    return 'Moderate confidence';
+  }
+
+  return 'Low confidence';
+}
+
+function getConfidenceBadgeClasses(tone) {
+  if (tone === 'positive') {
+    return 'border-green-200 bg-mintSoft text-positive';
+  }
+
+  if (tone === 'primary') {
+    return 'border-teal-200 bg-tealSoft text-primary';
+  }
+
+  return 'border-amber-200 bg-amberSoft text-caution';
+}
+
+function formatSelectedSymptoms(symptoms) {
+  return symptoms.join(', ');
 }
 
 function sortSymptoms(symptoms) {
@@ -86,6 +114,7 @@ export default function DiseasePredictionPage() {
   const [predictionLoading, setPredictionLoading] = useState(false);
   const [predictionError, setPredictionError] = useState('');
   const [result, setResult] = useState(null);
+  const [followUpAnswers, setFollowUpAnswers] = useState({});
 
   useEffect(() => {
     let active = true;
@@ -159,6 +188,9 @@ export default function DiseasePredictionPage() {
   const alternatePredictions = result?.predictions?.slice(1, 3) || [];
   const selectedCount = selectedSymptoms.length;
   const canPredict = selectedCount >= 2;
+  const selectedSymptomsForDisplay = result?.selectedSymptoms || selectedSymptoms;
+  const topConfidenceTone = topPrediction ? confidenceToTone(topPrediction.confidence) : 'caution';
+  const topConfidenceLabel = topPrediction ? getConfidenceLabel(topPrediction.confidence) : '';
 
   const toggleSymptom = (symptom) => {
     setSelectedSymptoms((current) => {
@@ -178,6 +210,13 @@ export default function DiseasePredictionPage() {
     setPredictionLoading(true);
     setPredictionError('');
 
+    const serializedFollowUpAnswers = Object.fromEntries(
+      Object.entries(followUpAnswers).map(([questionId, answer]) => [
+        questionId,
+        answer?.choice === 'Other' ? answer.otherText?.trim() || 'Other' : answer?.choice || ''
+      ])
+    );
+
     try {
       const response = await fetch(`${backendBaseUrl}/health-assessment/predict-disease`, {
         method: 'POST',
@@ -185,7 +224,10 @@ export default function DiseasePredictionPage() {
           'Content-Type': 'application/json',
           Accept: 'application/json'
         },
-        body: JSON.stringify({ symptoms: selectedSymptoms })
+        body: JSON.stringify({
+          symptoms: selectedSymptoms,
+          follow_up_answers: serializedFollowUpAnswers
+        })
       });
 
       if (!response.ok) {
@@ -195,14 +237,18 @@ export default function DiseasePredictionPage() {
       const data = await response.json();
       const predictions = (data.predictions || []).map((prediction) => ({
         ...prediction,
-        confidence: Math.round((prediction.probability || 0) * 100),
-        specialist: inferSpecialistForDisease(prediction.disease)
+        confidence: Math.round(((prediction.final_score ?? prediction.probability ?? 0) || 0) * 100),
+        specialist: prediction.recommended_specialist || prediction.specialist || inferSpecialistForDisease(prediction.disease)
       }));
 
       setResult({
         selectedSymptoms: data.selected_symptoms || selectedSymptoms,
-        predictions
+        predictions,
+        bestPrediction: data.best_prediction || predictions[0] || null,
+        followUpQuestions: data.follow_up_questions || [],
+        confidenceThresholdMet: Boolean(data.confidence_threshold_met)
       });
+      setFollowUpAnswers({});
     } catch (error) {
       setPredictionError(error instanceof Error ? error.message : 'Unable to predict disease.');
     } finally {
@@ -233,15 +279,126 @@ export default function DiseasePredictionPage() {
     });
   };
 
+  const handleAddMoreSymptoms = () => {
+    setResult(null);
+  };
+
+  const handleFollowUpAnswerChange = (questionId, value) => {
+    setFollowUpAnswers((current) => ({
+      ...current,
+      [questionId]: { choice: value, otherText: current[questionId]?.otherText || '' }
+    }));
+  };
+
+  const handleFollowUpOtherTextChange = (questionId, value) => {
+    setFollowUpAnswers((current) => ({
+      ...current,
+      [questionId]: { choice: 'Other', otherText: value }
+    }));
+  };
+
+  const followUpAnsweredCount = result?.followUpQuestions?.filter((question) => {
+    const answer = followUpAnswers[question.id];
+    return Boolean(answer?.choice && (answer.choice !== 'Other' || answer.otherText.trim()));
+  }).length || 0;
+
   if (result && topPrediction) {
-    const topTone = confidenceToTone(topPrediction.confidence);
+    const showLowConfidenceBanner = !result.confidenceThresholdMet || topPrediction.confidence < 50;
 
     return (
       <div className="space-y-6">
+        {showLowConfidenceBanner ? (
+          <section className="rounded-[24px] border border-amber-200 bg-amber-50 px-4 py-4 shadow-card sm:px-5">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm leading-7 text-caution">
+                Confidence is higher with more symptoms selected. Try adding a few more for a clearer result.
+              </p>
+              <button
+                type="button"
+                onClick={handleAddMoreSymptoms}
+                className="inline-flex items-center justify-center rounded-full border border-amber-200 bg-white px-4 py-2 text-sm font-medium text-caution transition hover:bg-amber-50"
+              >
+                Add more symptoms
+              </button>
+            </div>
+          </section>
+        ) : null}
+
+        {!result.confidenceThresholdMet && result.followUpQuestions?.length ? (
+          <section className="rounded-[28px] border border-border bg-white p-6 shadow-card sm:p-8">
+            <div className="text-sm font-medium uppercase tracking-[0.2em] text-primary">Follow-up questions</div>
+            <h2 className="mt-2 text-2xl font-medium tracking-tight text-heading">Answer these to improve accuracy</h2>
+            <p className="mt-3 text-sm leading-7 text-muted">
+              The model needs a little more context before finalizing a higher-confidence result.
+            </p>
+            <div className="mt-5 space-y-4">
+              {result.followUpQuestions.map((question) => {
+                const currentAnswer = followUpAnswers[question.id] || { choice: '', otherText: '' };
+                const showOtherInput = currentAnswer.choice === 'Other';
+
+                return (
+                  <div key={question.id} className="rounded-2xl bg-slate-50 p-4">
+                    <div className="font-medium text-heading">{question.question}</div>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {question.options.map((option) => {
+                        const isSelected = currentAnswer.choice === option;
+                        return (
+                          <button
+                            key={option}
+                            type="button"
+                            onClick={() => handleFollowUpAnswerChange(question.id, option)}
+                            className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
+                              isSelected
+                                ? 'border-primary bg-white text-heading shadow-card'
+                                : 'border-border bg-white text-muted hover:border-primary/40 hover:text-heading'
+                            }`}
+                          >
+                            {option}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {showOtherInput ? (
+                      <input
+                        type="text"
+                        value={currentAnswer.otherText}
+                        onChange={(event) => handleFollowUpOtherTextChange(question.id, event.target.value)}
+                        placeholder="Please describe"
+                        className="mt-4 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-heading outline-none transition placeholder:text-muted/70 focus:border-primary focus:ring-4 focus:ring-primary/10"
+                      />
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+            <div className="mt-5 flex items-center justify-between gap-4 rounded-2xl bg-slate-50 px-4 py-3 text-sm text-muted">
+              <span>{followUpAnsweredCount} of {result.followUpQuestions.length} answered</span>
+              <button
+                type="button"
+                onClick={handlePredict}
+                className="inline-flex items-center rounded-full bg-primary px-4 py-2 text-sm font-medium text-white shadow-soft transition hover:opacity-90"
+              >
+                Re-run prediction
+              </button>
+            </div>
+          </section>
+        ) : null}
+
         <section className="rounded-[28px] border border-border bg-white p-6 shadow-card sm:p-8">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
             <div className="max-w-2xl space-y-4">
-              <div className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium ${topTone === 'critical' ? 'border-red-200 bg-rose-50 text-critical' : topTone === 'caution' ? 'border-amber-200 bg-amberSoft text-caution' : 'border-green-200 bg-mintSoft text-positive'}`}>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm font-medium uppercase tracking-[0.2em] text-primary">Based on</span>
+                {selectedSymptomsForDisplay.map((symptom) => (
+                  <span
+                    key={symptom}
+                    className="inline-flex items-center rounded-full border border-border bg-slate-50 px-3 py-1 text-xs font-medium text-heading"
+                  >
+                    {symptom}
+                  </span>
+                ))}
+              </div>
+              <div className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium ${getConfidenceBadgeClasses(topConfidenceTone)}`}>
                 AI prediction ready
               </div>
               <h2 className="text-3xl font-medium tracking-tight text-heading sm:text-4xl">{topPrediction.disease}</h2>
@@ -252,11 +409,16 @@ export default function DiseasePredictionPage() {
               <div className="rounded-3xl bg-slate-50 p-5">
                 <div className="flex items-center justify-between gap-4 text-sm font-medium text-heading">
                   <span>Confidence</span>
-                  <span>{topPrediction.confidence}%</span>
+                  <span className="inline-flex items-center gap-2">
+                    <span>{topPrediction.confidence}%</span>
+                    <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ${getConfidenceBadgeClasses(topConfidenceTone)}`}>
+                      {topConfidenceLabel}
+                    </span>
+                  </span>
                 </div>
                 <div className="mt-3 h-3 overflow-hidden rounded-full bg-slate-200">
                   <div
-                    className={`h-full rounded-full ${topTone === 'critical' ? 'bg-critical' : topTone === 'caution' ? 'bg-caution' : 'bg-positive'}`}
+                    className={`h-full rounded-full ${topConfidenceTone === 'positive' ? 'bg-positive' : topConfidenceTone === 'primary' ? 'bg-primary' : 'bg-caution'}`}
                     style={{ width: `${topPrediction.confidence}%` }}
                   />
                 </div>
@@ -264,6 +426,11 @@ export default function DiseasePredictionPage() {
                   <div className="font-medium text-heading">Recommended specialist</div>
                   <p className="mt-1 text-muted">{topPrediction.specialist}</p>
                 </div>
+                {!result.confidenceThresholdMet ? (
+                  <p className="mt-4 text-sm leading-7 text-muted">
+                    This result is preliminary. Add more symptoms or answer the follow-up questions above for a clearer prediction.
+                  </p>
+                ) : null}
               </div>
             </div>
 
@@ -271,7 +438,10 @@ export default function DiseasePredictionPage() {
               <div className="rounded-[28px] border border-border bg-slate-50 px-6 py-5 text-center shadow-card">
                 <div className="text-sm uppercase tracking-[0.2em] text-primary">Top result</div>
                 <div className="mt-2 text-2xl font-medium tracking-tight text-heading">{topPrediction.confidence}% match</div>
-                <div className="mt-1 text-sm text-muted">{topPrediction.specialist}</div>
+                <div className={`mt-2 inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ${getConfidenceBadgeClasses(topConfidenceTone)}`}>
+                  {topConfidenceLabel}
+                </div>
+                <div className="mt-3 text-sm text-muted">{topPrediction.specialist}</div>
               </div>
               <button
                 type="button"
@@ -313,10 +483,10 @@ export default function DiseasePredictionPage() {
           </p>
           <button
             type="button"
-            onClick={() => setResult(null)}
+            onClick={handleAddMoreSymptoms}
             className="mt-6 inline-flex items-center justify-center rounded-full border border-border bg-white px-5 py-3 text-sm font-medium text-heading transition hover:bg-slate-50"
           >
-            Run another prediction
+            Add more symptoms
           </button>
         </section>
       </div>
@@ -339,7 +509,7 @@ export default function DiseasePredictionPage() {
           </div>
           <div className="rounded-3xl bg-slate-50 px-5 py-4 text-sm leading-7 text-heading">
             <div className="font-medium text-heading">Selected symptoms</div>
-            <p className="mt-1 text-muted">{selectedCount} chosen</p>
+            <p className="mt-1 text-muted">{selectedCount} symptoms selected — more symptoms improve prediction accuracy</p>
           </div>
         </div>
       </div>
