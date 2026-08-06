@@ -2,7 +2,6 @@ import { Link } from 'react-router-dom';
 import {
   CalendarDaysIcon,
   ChatBubbleLeftRightIcon,
-  ChartBarSquareIcon,
   BeakerIcon,
   HeartIcon,
   ShieldCheckIcon,
@@ -42,13 +41,6 @@ const featureCards = [
     tint: 'bg-amber-50'
   },
   {
-    title: 'Treatment Affordability',
-    description: 'Track affordability and make care plans easier to manage.',
-    to: '/affordability',
-    icon: ShieldCheckIcon,
-    tint: 'bg-emerald-50'
-  },
-  {
     title: 'Appointments',
     description: 'Keep your visits organized in one place.',
     to: '/appointments',
@@ -61,13 +53,6 @@ const featureCards = [
     to: '/chat',
     icon: ChatBubbleLeftRightIcon,
     tint: 'bg-cyan-50'
-  },
-  {
-    title: 'Health Roadmap',
-    description: 'Follow your care plan and milestones over time.',
-    to: '/roadmap',
-    icon: ChartBarSquareIcon,
-    tint: 'bg-indigo-50'
   }
 ];
 

@@ -27,10 +27,8 @@ const sidebarNavItems = [
   { label: 'Disease Prediction', to: '/disease-prediction', icon: BeakerIcon },
   { label: 'Smart Care Navigator', to: '/navigator', icon: SparklesIcon },
   { label: 'Cost Intelligence', to: '/cost', icon: WalletIcon },
-  { label: 'Treatment Affordability', to: '/affordability', icon: ShieldCheckIcon },
   { label: 'Appointments', to: '/appointments', icon: CalendarDaysIcon },
-  { label: 'AI Chat', to: '/chat', icon: ChatBubbleLeftRightIcon },
-  { label: 'Health Roadmap', to: '/roadmap', icon: ChartBarSquareIcon }
+  { label: 'AI Chat', to: '/chat', icon: ChatBubbleLeftRightIcon }
 ];
 
 const routeTitles = {
