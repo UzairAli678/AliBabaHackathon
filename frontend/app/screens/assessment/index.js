@@ -38,13 +38,6 @@ const features = [
     icon: Feather,
     iconName: "calendar",
     tint: colors.mintSoft
-  },
-  {
-    title: "Health Roadmap",
-    subtitle: "Track your care plan over time.",
-    icon: Feather,
-    iconName: "map",
-    tint: colors.slateSoft
   }
 ];
 

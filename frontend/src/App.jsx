@@ -2,7 +2,6 @@ import { Navigate, NavLink, Route, Routes, useNavigate } from 'react-router-dom'
 import {
   BellAlertIcon,
   CalendarDaysIcon,
-  ChartBarSquareIcon,
   HomeIcon,
   ShieldCheckIcon,
   SparklesIcon,
@@ -27,6 +26,8 @@ import ProfilePage from './pages/Profile';
 import SignInPage from './pages/SignInPage';
 import SignUpPage from './pages/SignUpPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import CostIntelligencePage from './pages/CostIntelligence';
+import AppointmentsPage from './pages/Appointments';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
 const navItems = [
@@ -34,7 +35,6 @@ const navItems = [
   { label: 'Care Navigator', to: '/navigator', icon: SparklesIcon },
   { label: 'Cost', to: '/cost', icon: CurrencyDollarIcon },
   { label: 'Appointments', to: '/appointments', icon: CalendarDaysIcon },
-  { label: 'Roadmap', to: '/roadmap', icon: ChartBarSquareIcon }
 ];
 
 const features = [
@@ -60,11 +60,11 @@ const features = [
     href: '/appointments'
   },
   {
-    title: 'Health Roadmap',
-    description: 'Track care plans, milestones, and recovery progress in one place.',
-    icon: ShieldCheckIcon,
-    tint: 'bg-slate-50',
-    href: '/roadmap'
+    title: 'Cost Intelligence',
+    description: 'Review transparent estimates and compare options before you commit to care.',
+    icon: CurrencyDollarIcon,
+    tint: 'bg-amber-50',
+    href: '/cost'
   }
 ];
 
@@ -408,7 +408,7 @@ function AppRoutes() {
         <Route path="/cost" element={<DashboardFeaturePage title="Cost" />} />
         <Route path="/affordability" element={<DashboardFeaturePage title="Treatment Affordability" />} />
         <Route path="/appointments" element={<DashboardFeaturePage title="Appointments" />} />
-        <Route path="/chat" element={<ChatPage />} />
+        <Route path="/chat" element={<DashboardFeaturePage title="AI Chat" />} />
         <Route path="/roadmap" element={<DashboardFeaturePage title="Roadmap" />} />
         <Route path="/profile" element={<ProfilePage />} />
       </Route>
