@@ -22,6 +22,7 @@ import DiseasePredictionPage from './pages/DiseasePrediction';
 import NavigatorPage from './pages/Navigator';
 import EmergencyPage from './pages/Emergency';
 import DashboardFeaturePage from './pages/DashboardFeaturePage';
+import ChatPage from './pages/Chat';
 import ProfilePage from './pages/Profile';
 import SignInPage from './pages/SignInPage';
 import SignUpPage from './pages/SignUpPage';
@@ -407,7 +408,7 @@ function AppRoutes() {
         <Route path="/cost" element={<DashboardFeaturePage title="Cost" />} />
         <Route path="/affordability" element={<DashboardFeaturePage title="Treatment Affordability" />} />
         <Route path="/appointments" element={<DashboardFeaturePage title="Appointments" />} />
-        <Route path="/chat" element={<DashboardFeaturePage title="AI Chat" />} />
+        <Route path="/chat" element={<ChatPage />} />
         <Route path="/roadmap" element={<DashboardFeaturePage title="Roadmap" />} />
         <Route path="/profile" element={<ProfilePage />} />
       </Route>

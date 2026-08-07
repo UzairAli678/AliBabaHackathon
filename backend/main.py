@@ -1,3 +1,6 @@
+from pathlib import Path
+
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -10,6 +13,8 @@ from routers.smart_care_navigator import router as smart_care_navigator_router
 from routers.treatment_affordability_score import router as treatment_affordability_score_router
 
 app = FastAPI(title="CareLedger AI Backend")
+
+load_dotenv(Path(__file__).resolve().parents[1] / '.env')
 
 app.add_middleware(
     CORSMiddleware,
