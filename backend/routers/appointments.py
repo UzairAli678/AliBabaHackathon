@@ -1,121 +1,143 @@
+from __future__ import annotations
+
+import os
 from datetime import datetime
 from typing import Any
+from uuid import uuid4
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException
+from google import genai
+from google.genai import types
 from pydantic import BaseModel, Field
+
+from routers.smart_care_navigator import MOCK_DOCTORS, MOCK_HOSPITALS
 
 router = APIRouter(prefix="/appointments", tags=["appointments"])
 
+SYSTEM_INSTRUCTION = (
+    "You are the CareLedger AI appointments assistant. Write warm, concise booking confirmations that reference the "
+    "doctor, hospital, date, and time the user selected. Keep the tone reassuring and practical."
+)
 
-class AppointmentRequest(BaseModel):
-    doctor_id: str = Field(..., min_length=1)
+
+class AppointmentBookRequest(BaseModel):
+    hospital_name: str = Field(..., min_length=1)
     doctor_name: str = Field(..., min_length=1)
-    specialty: str = Field(..., min_length=1)
+    specialization: str = Field(..., min_length=1)
+    consultation_fee: float = Field(..., ge=0)
     appointment_date: str = Field(..., min_length=1)
-    appointment_time: str = Field(..., min_length=1)
-    mode: str = Field(default="in-person")
-    notes: str = Field(default="")
-    user_email: str = Field(..., min_length=1)
-
-
-class AppointmentUpdateRequest(BaseModel):
-    appointment_date: str | None = None
-    appointment_time: str | None = None
-    mode: str | None = None
-    notes: str | None = None
-    status: str | None = None
+    time_slot: str = Field(..., min_length=1)
+    appointment_type: str = Field(..., min_length=1)
+    reason_for_visit: str = Field(default="")
 
 
 class AppointmentRecord(BaseModel):
-    id: str
-    doctor_id: str
+    appointment_id: str
+    hospital_name: str
     doctor_name: str
-    specialty: str
+    specialization: str
+    consultation_fee: float
     appointment_date: str
-    appointment_time: str
-    mode: str
-    notes: str
+    time_slot: str
+    appointment_type: str
+    reason_for_visit: str
     status: str
-    user_email: str
+    confirmation_message: str
 
 
-_storage: list[AppointmentRecord] = []
+_session_bookings: list[AppointmentRecord] = []
 
 
-def _is_valid_slot(date_str: str, time_str: str) -> bool:
-    try:
-        datetime.strptime(f"{date_str} {time_str}", "%Y-%m-%d %H:%M")
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail="Invalid appointment date or time") from exc
-    return True
+def _find_doctor(doctor_name: str) -> dict[str, Any] | None:
+    return next((doctor for doctor in MOCK_DOCTORS if doctor["name"].lower() == doctor_name.lower()), None)
 
 
-def _conflict_exists(doctor_id: str, date_str: str, time_str: str, exclude_id: str | None = None) -> bool:
-    return any(
-        item.doctor_id == doctor_id and item.appointment_date == date_str and item.appointment_time == time_str and item.id != (exclude_id or "")
-        for item in _storage
+def _find_hospital(hospital_name: str) -> dict[str, Any] | None:
+    return next((hospital for hospital in MOCK_HOSPITALS if hospital["name"].lower() == hospital_name.lower()), None)
+
+
+def _build_fallback_confirmation(payload: AppointmentBookRequest) -> str:
+    return (
+        f"Your appointment with {payload.doctor_name} at {payload.hospital_name} has been confirmed for "
+        f"{payload.appointment_date} at {payload.time_slot}. Your consultation fee is PKR {payload.consultation_fee:,.0f}."
     )
 
 
-@router.get("", response_model=list[AppointmentRecord])
-def get_appointments() -> list[AppointmentRecord]:
-    return _storage
+def _generate_confirmation_message(payload: AppointmentBookRequest) -> str:
+    api_key = os.getenv("GEMINI_API_KEY", "").strip()
+    if not api_key:
+        return _build_fallback_confirmation(payload)
+
+    try:
+        client = genai.Client(api_key=api_key)
+        prompt = (
+            f"Write a warm, short appointment confirmation message for {payload.doctor_name} at {payload.hospital_name}. "
+            f"The appointment date is {payload.appointment_date}, the time is {payload.time_slot}, the visit type is {payload.appointment_type}, "
+            f"and the fee is PKR {payload.consultation_fee:,.0f}. Mention the reason briefly if helpful: {payload.reason_for_visit or 'not provided'}. "
+            "Keep it under 3 sentences and mention the actual doctor, hospital, date, and time."
+        )
+        response = client.models.generate_content(
+            model=os.getenv("GEMINI_MODEL", "gemini-2.5-flash"),
+            contents=[types.Content(role="user", parts=[types.Part.from_text(text=prompt)])],
+            config=types.GenerateContentConfig(system_instruction=SYSTEM_INSTRUCTION),
+        )
+        text = getattr(response, "text", "") or ""
+        return text.strip() or _build_fallback_confirmation(payload)
+    except Exception:
+        return _build_fallback_confirmation(payload)
 
 
-@router.post("", response_model=AppointmentRecord)
-def create_appointment(payload: AppointmentRequest) -> AppointmentRecord:
-    _is_valid_slot(payload.appointment_date, payload.appointment_time)
+def _validate_booking(payload: AppointmentBookRequest) -> None:
+    if not _find_hospital(payload.hospital_name):
+        raise HTTPException(status_code=400, detail="Unknown hospital name")
 
-    if _conflict_exists(payload.doctor_id, payload.appointment_date, payload.appointment_time):
-        raise HTTPException(status_code=409, detail="The selected time slot is no longer available")
+    doctor = _find_doctor(payload.doctor_name)
+    if not doctor:
+        raise HTTPException(status_code=400, detail="Unknown doctor name")
+
+    if doctor["hospital_name"].lower() != payload.hospital_name.lower():
+        raise HTTPException(status_code=400, detail="Selected doctor does not practice at the chosen hospital")
+
+    if doctor["specialization"].lower() != payload.specialization.lower():
+        raise HTTPException(status_code=400, detail="Specialization does not match the selected doctor")
+
+    if float(doctor["consultation_fee"]) != float(payload.consultation_fee):
+        raise HTTPException(status_code=400, detail="Consultation fee does not match the selected doctor")
+
+    try:
+        datetime.strptime(payload.appointment_date, "%Y-%m-%d")
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid appointment date") from exc
+
+    if payload.time_slot not in doctor["time_slots"]:
+        raise HTTPException(status_code=400, detail="Selected time slot is not available for this doctor")
+
+    if payload.appointment_type not in {"In-person", "Video call"}:
+        raise HTTPException(status_code=400, detail="Invalid appointment type")
+
+
+@router.post("/book", response_model=AppointmentRecord)
+def book_appointment(payload: AppointmentBookRequest) -> AppointmentRecord:
+    _validate_booking(payload)
+    confirmation_message = _generate_confirmation_message(payload)
 
     record = AppointmentRecord(
-        id=f"appt-{len(_storage) + 1}",
-        doctor_id=payload.doctor_id,
+        appointment_id=f"apt-{uuid4().hex[:8]}",
+        hospital_name=payload.hospital_name,
         doctor_name=payload.doctor_name,
-        specialty=payload.specialty,
+        specialization=payload.specialization,
+        consultation_fee=payload.consultation_fee,
         appointment_date=payload.appointment_date,
-        appointment_time=payload.appointment_time,
-        mode=payload.mode,
-        notes=payload.notes,
-        status="scheduled",
-        user_email=payload.user_email,
+        time_slot=payload.time_slot,
+        appointment_type=payload.appointment_type,
+        reason_for_visit=payload.reason_for_visit,
+        status="Confirmed",
+        confirmation_message=confirmation_message,
     )
-    _storage.append(record)
+    _session_bookings.append(record)
     return record
 
 
-@router.patch("/{appointment_id}", response_model=AppointmentRecord)
-def update_appointment(appointment_id: str, payload: AppointmentUpdateRequest) -> AppointmentRecord:
-    appointment = next((item for item in _storage if item.id == appointment_id), None)
-    if appointment is None:
-        raise HTTPException(status_code=404, detail="Appointment not found")
-
-    if payload.appointment_date is not None or payload.appointment_time is not None:
-        next_date = payload.appointment_date or appointment.appointment_date
-        next_time = payload.appointment_time or appointment.appointment_time
-        _is_valid_slot(next_date, next_time)
-
-        if _conflict_exists(appointment.doctor_id, next_date, next_time, appointment.id):
-            raise HTTPException(status_code=409, detail="The selected time slot is no longer available")
-
-        appointment.appointment_date = next_date
-        appointment.appointment_time = next_time
-
-    if payload.mode is not None:
-        appointment.mode = payload.mode
-    if payload.notes is not None:
-        appointment.notes = payload.notes
-    if payload.status is not None:
-        appointment.status = payload.status
-
-    return appointment
-
-
-@router.delete("/{appointment_id}", status_code=status.HTTP_204_NO_CONTENT)
-def cancel_appointment(appointment_id: str) -> None:
-    appointment = next((item for item in _storage if item.id == appointment_id), None)
-    if appointment is None:
-        raise HTTPException(status_code=404, detail="Appointment not found")
-
-    appointment.status = "cancelled"
+@router.get("/my-appointments", response_model=list[AppointmentRecord])
+def get_my_appointments() -> list[AppointmentRecord]:
+    return _session_bookings

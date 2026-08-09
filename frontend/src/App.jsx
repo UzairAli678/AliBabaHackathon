@@ -2,10 +2,14 @@ import { Navigate, NavLink, Route, Routes, useNavigate } from 'react-router-dom'
 import {
   BellAlertIcon,
   CalendarDaysIcon,
+  ChatBubbleLeftRightIcon,
+  BeakerIcon,
   HomeIcon,
+  HeartIcon,
   ShieldCheckIcon,
   SparklesIcon,
   CurrencyDollarIcon,
+  WalletIcon,
   UserCircleIcon,
   ArrowRightOnRectangleIcon,
   UserPlusIcon,
@@ -39,6 +43,20 @@ const navItems = [
 
 const features = [
   {
+    title: 'Health Assessment',
+    description: 'Capture symptoms and get structured next-step guidance.',
+    icon: HeartIcon,
+    tint: 'bg-teal-50',
+    href: '/assessment'
+  },
+  {
+    title: 'Disease Prediction',
+    description: 'Search symptoms and see likely conditions from the AI model.',
+    icon: BeakerIcon,
+    tint: 'bg-violet-50',
+    href: '/disease-prediction'
+  },
+  {
     title: 'Smart Care Navigator',
     description: 'Get calm, practical guidance on the right next step for symptoms and follow-up care.',
     icon: SparklesIcon,
@@ -48,23 +66,37 @@ const features = [
   {
     title: 'Cost Intelligence',
     description: 'Review transparent estimates and compare options before you commit to care.',
-    icon: CurrencyDollarIcon,
+    icon: WalletIcon,
     tint: 'bg-amber-50',
     href: '/cost'
+  },
+  {
+    title: 'Treatment Affordability',
+    description: 'Track affordability and make care plans easier to manage.',
+    icon: ShieldCheckIcon,
+    tint: 'bg-emerald-50',
+    href: '/affordability'
   },
   {
     title: 'Appointments',
-    description: 'Keep visits organized with a clean, simple view of upcoming care moments.',
+    description: 'Keep your visits organized in one place.',
     icon: CalendarDaysIcon,
-    tint: 'bg-emerald-50',
+    tint: 'bg-slate-50',
     href: '/appointments'
   },
   {
-    title: 'Cost Intelligence',
-    description: 'Review transparent estimates and compare options before you commit to care.',
-    icon: CurrencyDollarIcon,
-    tint: 'bg-amber-50',
-    href: '/cost'
+    title: 'AI Chat',
+    description: 'Ask follow-up questions and get quick support.',
+    icon: ChatBubbleLeftRightIcon,
+    tint: 'bg-cyan-50',
+    href: '/chat'
+  },
+  {
+    title: 'Health Roadmap',
+    description: 'Follow your care plan and milestones over time.',
+    icon: SparklesIcon,
+    tint: 'bg-sky-50',
+    href: '/roadmap'
   }
 ];
 
@@ -393,6 +425,7 @@ function AppRoutes() {
           </GuestOnlyRoute>
         }
       />
+      <Route path="/cost" element={<CostIntelligencePage />} />
       <Route
         element={
           <ProtectedRoute>
@@ -405,10 +438,9 @@ function AppRoutes() {
         <Route path="/disease-prediction" element={<DiseasePredictionPage />} />
         <Route path="/navigator" element={<NavigatorPage />} />
         <Route path="/emergency" element={<EmergencyPage />} />
-        <Route path="/cost" element={<DashboardFeaturePage title="Cost" />} />
-        <Route path="/affordability" element={<DashboardFeaturePage title="Treatment Affordability" />} />
-        <Route path="/appointments" element={<DashboardFeaturePage title="Appointments" />} />
-        <Route path="/chat" element={<DashboardFeaturePage title="AI Chat" />} />
+        <Route path="/cost" element={<CostIntelligencePage />} />
+        <Route path="/appointments" element={<AppointmentsPage />} />
+        <Route path="/chat" element={<ChatPage />} />
         <Route path="/roadmap" element={<DashboardFeaturePage title="Roadmap" />} />
         <Route path="/profile" element={<ProfilePage />} />
       </Route>

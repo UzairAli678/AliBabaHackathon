@@ -100,8 +100,8 @@ def build_fallback_reply(emergency_detected: bool) -> str:
     )
     return (
         f"{prefix}I'm sorry, I can't answer that in full right now. "
-        "I can still help with a quick next step: use Health Assessment or Disease Prediction for a more structured check, "
-        "and if your symptoms feel serious, please consult a licensed doctor. You can also try again shortly."
+        "Please try again shortly, or use Health Assessment or Disease Prediction for a more structured check in the meantime. "
+        "If the symptoms feel serious, please consult a licensed doctor."
     )
 
 
@@ -116,7 +116,7 @@ def send_message(request: ChatMessageRequest) -> ChatMessageResponse:
         )
 
     try:
-        model_name = os.getenv('GEMINI_MODEL', 'gemini-2.0-flash')
+        model_name = os.getenv('GEMINI_MODEL', 'gemini-2.5-flash')
         client = genai.Client(api_key=api_key)
         response = client.models.generate_content(
             model=model_name,

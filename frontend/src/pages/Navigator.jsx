@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
-import { useLocation } from 'react-router-dom';
-import { ArrowTopRightOnSquareIcon, MapPinIcon, StarIcon } from '@heroicons/react/24/outline';
+import { Link, useLocation } from 'react-router-dom';
+import { ArrowTopRightOnSquareIcon, CalendarDaysIcon, MapPinIcon, StarIcon } from '@heroicons/react/24/outline';
 import TextField from '../components/TextField';
 
 const symptomPresets = [
@@ -18,10 +18,34 @@ const symptomPresets = [
 ]
 
 const nearbyOptions = [
-  { name: 'Northside General Clinic', distance: '1.2 mi', rating: 4.8, cost: '$85-$120' },
-  { name: 'Harbor Urgent Care', distance: '2.0 mi', rating: 4.6, cost: '$110-$160' },
-  { name: 'Cedar Family Medicine', distance: '3.4 mi', rating: 4.9, cost: '$95-$140' },
-  { name: 'City Specialty Center', distance: '4.1 mi', rating: 4.7, cost: '$140-$220' }
+  { name: 'Northside General Clinic', distance: '1.2 mi', rating: 4.8, cost: 'PKR 85 - PKR 120' },
+  { name: 'Harbor Urgent Care', distance: '2.0 mi', rating: 4.6, cost: 'PKR 110 - PKR 160' },
+  { name: 'Cedar Family Medicine', distance: '3.4 mi', rating: 4.9, cost: 'PKR 95 - PKR 140' },
+  { name: 'City Specialty Center', distance: '4.1 mi', rating: 4.7, cost: 'PKR 140 - PKR 220' }
+];
+
+const doctorOptions = [
+  {
+    hospital_name: 'City Care Hospital',
+    doctor_name: 'Dr. Amina Khan',
+    specialization: 'Cardiology',
+    consultation_fee: 3500,
+    appointment_date_hint: 'Choose a date that matches the doctor availability.',
+  },
+  {
+    hospital_name: 'Teal Medical Center',
+    doctor_name: 'Dr. Sara Fatima',
+    specialization: 'Neurology',
+    consultation_fee: 4200,
+    appointment_date_hint: 'Tue, Thu, or Sat work best for this doctor.',
+  },
+  {
+    hospital_name: 'Sunrise Clinic',
+    doctor_name: 'Dr. Bilal Hassan',
+    specialization: 'Orthopedics',
+    consultation_fee: 3000,
+    appointment_date_hint: 'Mon, Thu, or Sun work best for this doctor.',
+  },
 ];
 
 function inferUrgency(sourceText) {
@@ -95,6 +119,7 @@ export default function NavigatorPage() {
   const urgency = assessment?.urgency || inferUrgency(sourceText);
   const specialist = passedSpecialist || assessment?.suggestedSpecialist || inferSpecialist(sourceText);
   const guidance = buildGuidance(urgency);
+  const bookableDoctor = doctorOptions.find((option) => option.specialization === specialist) || doctorOptions[0];
 
   const summaryText = assessment
     ? `Based on your assessment, your risk level is ${assessment.riskLevel} and the current urgency is ${assessment.urgency}.`
@@ -193,6 +218,36 @@ export default function NavigatorPage() {
                 </a>
               </article>
             ))}
+          </div>
+
+          <div className="rounded-[24px] border border-border bg-white p-5 shadow-card">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <div className="text-sm font-medium uppercase tracking-[0.2em] text-primary">Book appointment</div>
+                <h4 className="mt-2 text-xl font-medium tracking-tight text-heading">Use the current care recommendation</h4>
+                <p className="mt-2 text-sm leading-7 text-muted">
+                  We will pass the selected hospital and doctor into the booking flow so the appointment page can auto-fill the summary.
+                </p>
+              </div>
+              <Link
+                to="/appointments"
+                state={{
+                  appointmentSelection: {
+                    hospital_name: bookableDoctor.hospital_name,
+                    doctor_name: bookableDoctor.doctor_name,
+                    specialization: bookableDoctor.specialization,
+                    consultation_fee: bookableDoctor.consultation_fee,
+                  }
+                }}
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-medium text-white shadow-soft transition hover:opacity-90"
+              >
+                <CalendarDaysIcon className="h-4 w-4" />
+                Book Appointment
+              </Link>
+            </div>
+            <div className="mt-4 rounded-2xl border border-teal-200 bg-teal-50 px-4 py-3 text-sm text-primary">
+              {bookableDoctor.doctor_name} at {bookableDoctor.hospital_name} · {bookableDoctor.specialization} · {formatCurrency ? '' : ''}
+            </div>
           </div>
         </div>
 
