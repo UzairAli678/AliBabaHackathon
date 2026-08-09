@@ -1,8 +1,7 @@
 import { useMemo, useState } from 'react';
 import { ArrowRightIcon, SparklesIcon, CurrencyDollarIcon, ShieldCheckIcon } from '@heroicons/react/24/outline';
 import CircularGauge from '../components/CircularGauge';
-
-const backendBaseUrl = import.meta.env.VITE_BACKEND_URL?.trim() || 'http://127.0.0.1:8001';
+import { API_BASE_URL as backendBaseUrl } from '../lib/api';
 
 const hospitalOptions = [
   'City General Hospital',

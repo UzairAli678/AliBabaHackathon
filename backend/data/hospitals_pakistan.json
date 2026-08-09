@@ -1,0 +1,549 @@
+{
+  "_comment": "Illustrative sample data using real Pakistani institution names for demo realism only. Fees, ratings, waiting times, and doctor details are fabricated and are NOT live/verified data.",
+  "hospitals": [
+    {
+      "name": "Aga Khan University Hospital",
+      "city": "Karachi",
+      "area": "Stadium Road, Karimabad",
+      "specialists_available": ["Cardiology", "Neurology", "Oncology", "Orthopedics", "Gastroenterology", "Dermatology", "Pulmonology"],
+      "distance_km": 3.2,
+      "insurance_accepted": ["Jubilee Health Insurance", "Adamjee Insurance", "EFU Health", "IGI Insurance"],
+      "consultation_fee": 3500,
+      "rating": 4.8,
+      "waiting_time_minutes": 25,
+      "has_emergency_services": true,
+      "doctors": [
+        {
+          "id": "dr-fatima-shahid",
+          "name": "Dr. Fatima Shahid",
+          "specialization": "Cardiology",
+          "qualifications": "MBBS, FCPS (Cardiology), Fellowship Interventional Cardiology",
+          "years_experience": 14,
+          "rating": 4.9,
+          "fee": 4000,
+          "available_days": ["Mon", "Wed", "Fri"],
+          "time_slots": ["09:00 AM", "11:00 AM", "02:00 PM"],
+          "languages_spoken": ["Urdu", "English"]
+        },
+        {
+          "id": "dr-imran-akhtar",
+          "name": "Dr. Imran Akhtar",
+          "specialization": "Neurology",
+          "qualifications": "MBBS, FCPS (Neurology), MRCP (UK)",
+          "years_experience": 18,
+          "rating": 4.7,
+          "fee": 4500,
+          "available_days": ["Tue", "Thu", "Sat"],
+          "time_slots": ["08:30 AM", "10:30 AM", "03:30 PM"],
+          "languages_spoken": ["Urdu", "English", "Punjabi"]
+        },
+        {
+          "id": "dr-nadia-rahman",
+          "name": "Dr. Nadia Rahman",
+          "specialization": "Dermatology",
+          "qualifications": "MBBS, FCPS (Dermatology)",
+          "years_experience": 10,
+          "rating": 4.8,
+          "fee": 3000,
+          "available_days": ["Mon", "Tue", "Thu"],
+          "time_slots": ["10:00 AM", "01:00 PM", "04:00 PM"],
+          "languages_spoken": ["Urdu", "English"]
+        }
+      ]
+    },
+    {
+      "name": "Shaukat Khanum Memorial Cancer Hospital",
+      "city": "Lahore",
+      "area": "7-A, Block R-3, Johar Town",
+      "specialists_available": ["Oncology", "Hematology", "Radiology", "Internal Medicine", "Pulmonology"],
+      "distance_km": 5.1,
+      "insurance_accepted": ["Jubilee Health Insurance", "Adamjee Insurance", "EFU Health"],
+      "consultation_fee": 2500,
+      "rating": 4.9,
+      "waiting_time_minutes": 35,
+      "has_emergency_services": true,
+      "doctors": [
+        {
+          "id": "dr-asad-mahmood",
+          "name": "Dr. Asad Mahmood",
+          "specialization": "Oncology",
+          "qualifications": "MBBS, FCPS (Oncology), Fellowship MD Anderson Cancer Center",
+          "years_experience": 20,
+          "rating": 4.9,
+          "fee": 5000,
+          "available_days": ["Mon", "Wed", "Fri"],
+          "time_slots": ["09:00 AM", "11:30 AM", "02:30 PM"],
+          "languages_spoken": ["Urdu", "English"]
+        },
+        {
+          "id": "dr-saima-tariq",
+          "name": "Dr. Saima Tariq",
+          "specialization": "Hematology",
+          "qualifications": "MBBS, FCPS (Hematology)",
+          "years_experience": 12,
+          "rating": 4.7,
+          "fee": 3500,
+          "available_days": ["Tue", "Thu", "Sat"],
+          "time_slots": ["10:00 AM", "01:00 PM", "03:30 PM"],
+          "languages_spoken": ["Urdu", "English"]
+        }
+      ]
+    },
+    {
+      "name": "Liaquat National Hospital",
+      "city": "Karachi",
+      "area": "National Stadium Road",
+      "specialists_available": ["Cardiology", "Orthopedics", "Gastroenterology", "General Surgery", "Urology", "Pulmonology"],
+      "distance_km": 4.0,
+      "insurance_accepted": ["Jubilee Health Insurance", "Adamjee Insurance", "EFU Health", "IGI Insurance", "TPS Health"],
+      "consultation_fee": 2000,
+      "rating": 4.6,
+      "waiting_time_minutes": 30,
+      "has_emergency_services": true,
+      "doctors": [
+        {
+          "id": "dr-kamran-siddiqui",
+          "name": "Dr. Kamran Siddiqui",
+          "specialization": "Orthopedics",
+          "qualifications": "MBBS, FCPS (Orthopedics), Fellowship Joint Replacement",
+          "years_experience": 16,
+          "rating": 4.6,
+          "fee": 2500,
+          "available_days": ["Mon", "Thu", "Sun"],
+          "time_slots": ["09:30 AM", "12:00 PM", "04:00 PM"],
+          "languages_spoken": ["Urdu", "English", "Sindhi"]
+        },
+        {
+          "id": "dr-rabia-anwar",
+          "name": "Dr. Rabia Anwar",
+          "specialization": "Gastroenterology",
+          "qualifications": "MBBS, FCPS (Gastroenterology)",
+          "years_experience": 11,
+          "rating": 4.5,
+          "fee": 2200,
+          "available_days": ["Tue", "Wed", "Fri"],
+          "time_slots": ["08:00 AM", "11:00 AM", "02:00 PM"],
+          "languages_spoken": ["Urdu", "English"]
+        }
+      ]
+    },
+    {
+      "name": "South City Hospital",
+      "city": "Karachi",
+      "area": "ST-19, Block 7, Shahrah-e-Faisal",
+      "specialists_available": ["Cardiology", "Neurology", "Dermatology", "Endocrinology", "Gynecology"],
+      "distance_km": 2.8,
+      "insurance_accepted": ["Jubilee Health Insurance", "EFU Health", "IGI Insurance"],
+      "consultation_fee": 3000,
+      "rating": 4.7,
+      "waiting_time_minutes": 20,
+      "has_emergency_services": true,
+      "doctors": [
+        {
+          "id": "dr-hassan-raza",
+          "name": "Dr. Hassan Raza",
+          "specialization": "Cardiology",
+          "qualifications": "MBBS, FCPS (Cardiology), MRCP (UK)",
+          "years_experience": 15,
+          "rating": 4.8,
+          "fee": 3500,
+          "available_days": ["Mon", "Wed", "Fri"],
+          "time_slots": ["09:00 AM", "10:30 AM", "02:00 PM"],
+          "languages_spoken": ["Urdu", "English"]
+        },
+        {
+          "id": "dr-ayesha-khan",
+          "name": "Dr. Ayesha Khan",
+          "specialization": "Endocrinology",
+          "qualifications": "MBBS, FCPS (Endocrinology)",
+          "years_experience": 9,
+          "rating": 4.6,
+          "fee": 2800,
+          "available_days": ["Tue", "Thu", "Sat"],
+          "time_slots": ["10:00 AM", "01:00 PM", "03:30 PM"],
+          "languages_spoken": ["Urdu", "English"]
+        }
+      ]
+    },
+    {
+      "name": "Indus Hospital",
+      "city": "Karachi",
+      "area": "Plot 27, Sector 26, Korangi",
+      "specialists_available": ["General Medicine", "Pulmonology", "Nephrology", "Pediatrics", "Orthopedics"],
+      "distance_km": 6.5,
+      "insurance_accepted": ["Free care for eligible patients", "Sehat Sahulat Program"],
+      "consultation_fee": 500,
+      "rating": 4.5,
+      "waiting_time_minutes": 45,
+      "has_emergency_services": true,
+      "doctors": [
+        {
+          "id": "dr-zubair-khan",
+          "name": "Dr. Zubair Khan",
+          "specialization": "Pulmonology",
+          "qualifications": "MBBS, FCPS (Pulmonology)",
+          "years_experience": 13,
+          "rating": 4.5,
+          "fee": 1000,
+          "available_days": ["Mon", "Tue", "Wed", "Fri"],
+          "time_slots": ["09:00 AM", "11:00 AM", "01:00 PM"],
+          "languages_spoken": ["Urdu", "English", "Pashto"]
+        },
+        {
+          "id": "dr-meera-joshi",
+          "name": "Dr. Meera Joshi",
+          "specialization": "General Medicine",
+          "qualifications": "MBBS, FCPS (Internal Medicine)",
+          "years_experience": 8,
+          "rating": 4.4,
+          "fee": 500,
+          "available_days": ["Mon", "Wed", "Thu", "Sat"],
+          "time_slots": ["08:30 AM", "10:30 AM", "12:30 PM"],
+          "languages_spoken": ["Urdu", "English", "Sindhi"]
+        }
+      ]
+    },
+    {
+      "name": "Services Hospital",
+      "city": "Lahore",
+      "area": "Lower Mall Road",
+      "specialists_available": ["General Medicine", "Cardiology", "Neurology", "Orthopedics", "Urology", "ENT"],
+      "distance_km": 3.8,
+      "insurance_accepted": ["Sehat Sahulat Program", "Government Employee Cards"],
+      "consultation_fee": 800,
+      "rating": 4.2,
+      "waiting_time_minutes": 50,
+      "has_emergency_services": true,
+      "doctors": [
+        {
+          "id": "dr-tariq-mahmood",
+          "name": "Dr. Tariq Mahmood",
+          "specialization": "General Medicine",
+          "qualifications": "MBBS, FCPS (Internal Medicine)",
+          "years_experience": 22,
+          "rating": 4.3,
+          "fee": 1000,
+          "available_days": ["Mon", "Tue", "Wed", "Thu", "Fri"],
+          "time_slots": ["09:00 AM", "11:00 AM", "01:00 PM"],
+          "languages_spoken": ["Urdu", "English", "Punjabi"]
+        },
+        {
+          "id": "dr-fariha-naz",
+          "name": "Dr. Fariha Naz",
+          "specialization": "ENT",
+          "qualifications": "MBBS, FCPS (ENT)",
+          "years_experience": 10,
+          "rating": 4.4,
+          "fee": 1200,
+          "available_days": ["Mon", "Wed", "Fri"],
+          "time_slots": ["10:00 AM", "12:00 PM", "02:00 PM"],
+          "languages_spoken": ["Urdu", "English", "Punjabi"]
+        }
+      ]
+    },
+    {
+      "name": "Jinnah Postgraduate Medical Centre",
+      "city": "Karachi",
+      "area": "Rafiqui Shaheed Road, Cantt",
+      "specialists_available": ["General Medicine", "Cardiology", "Neurology", "Orthopedics", "Gastroenterology", "Pediatrics"],
+      "distance_km": 5.5,
+      "insurance_accepted": ["Sehat Sahulat Program", "Government Employee Cards"],
+      "consultation_fee": 600,
+      "rating": 4.1,
+      "waiting_time_minutes": 55,
+      "has_emergency_services": true,
+      "doctors": [
+        {
+          "id": "dr-abdul-rehman",
+          "name": "Dr. Abdul Rehman",
+          "specialization": "Neurology",
+          "qualifications": "MBBS, FCPS (Neurology)",
+          "years_experience": 17,
+          "rating": 4.2,
+          "fee": 1500,
+          "available_days": ["Mon", "Tue", "Thu"],
+          "time_slots": ["09:00 AM", "11:30 AM", "02:00 PM"],
+          "languages_spoken": ["Urdu", "English"]
+        },
+        {
+          "id": "dr-shazia-parveen",
+          "name": "Dr. Shazia Parveen",
+          "specialization": "Pediatrics",
+          "qualifications": "MBBS, FCPS (Pediatrics)",
+          "years_experience": 14,
+          "rating": 4.3,
+          "fee": 800,
+          "available_days": ["Wed", "Thu", "Sat"],
+          "time_slots": ["10:00 AM", "12:00 PM", "02:00 PM"],
+          "languages_spoken": ["Urdu", "English", "Sindhi"]
+        }
+      ]
+    },
+    {
+      "name": "Pakistan Institute of Medical Sciences",
+      "city": "Islamabad",
+      "area": "Sector H-8/4",
+      "specialists_available": ["Cardiology", "Neurology", "Oncology", "Nephrology", "Gastroenterology", "Pulmonology", "Endocrinology"],
+      "distance_km": 4.2,
+      "insurance_accepted": ["Sehat Sahulat Program", "Jubilee Health Insurance", "Adamjee Insurance", "EFU Health"],
+      "consultation_fee": 1500,
+      "rating": 4.5,
+      "waiting_time_minutes": 40,
+      "has_emergency_services": true,
+      "doctors": [
+        {
+          "id": "dr-naveed-ahmed",
+          "name": "Dr. Naveed Ahmed",
+          "specialization": "Cardiology",
+          "qualifications": "MBBS, FCPS (Cardiology), Fellowship Interventional Cardiology",
+          "years_experience": 19,
+          "rating": 4.6,
+          "fee": 2000,
+          "available_days": ["Mon", "Wed", "Fri"],
+          "time_slots": ["09:00 AM", "11:00 AM", "02:00 PM"],
+          "languages_spoken": ["Urdu", "English"]
+        },
+        {
+          "id": "dr-samina-begum",
+          "name": "Dr. Samina Begum",
+          "specialization": "Endocrinology",
+          "qualifications": "MBBS, FCPS (Endocrinology)",
+          "years_experience": 12,
+          "rating": 4.5,
+          "fee": 1800,
+          "available_days": ["Tue", "Thu", "Sat"],
+          "time_slots": ["10:00 AM", "01:00 PM", "03:30 PM"],
+          "languages_spoken": ["Urdu", "English", "Punjabi"]
+        }
+      ]
+    },
+    {
+      "name": "Shifa International Hospital",
+      "city": "Islamabad",
+      "area": "Pitras Bukhari Road, H-8/4",
+      "specialists_available": ["Cardiology", "Neurology", "Oncology", "Orthopedics", "Gastroenterology", "Dermatology", "Urology"],
+      "distance_km": 3.5,
+      "insurance_accepted": ["Jubilee Health Insurance", "Adamjee Insurance", "EFU Health", "IGI Insurance", "TPS Health"],
+      "consultation_fee": 3500,
+      "rating": 4.7,
+      "waiting_time_minutes": 22,
+      "has_emergency_services": true,
+      "doctors": [
+        {
+          "id": "dr-omar-farooq",
+          "name": "Dr. Omar Farooq",
+          "specialization": "Gastroenterology",
+          "qualifications": "MBBS, FCPS (Gastroenterology), MRCP (UK)",
+          "years_experience": 16,
+          "rating": 4.7,
+          "fee": 4000,
+          "available_days": ["Mon", "Wed", "Fri"],
+          "time_slots": ["09:00 AM", "11:30 AM", "02:30 PM"],
+          "languages_spoken": ["Urdu", "English"]
+        },
+        {
+          "id": "dr-hina-malik",
+          "name": "Dr. Hina Malik",
+          "specialization": "Dermatology",
+          "qualifications": "MBBS, FCPS (Dermatology)",
+          "years_experience": 9,
+          "rating": 4.6,
+          "fee": 3000,
+          "available_days": ["Tue", "Thu", "Sat"],
+          "time_slots": ["10:00 AM", "01:00 PM", "04:00 PM"],
+          "languages_spoken": ["Urdu", "English"]
+        }
+      ]
+    },
+    {
+      "name": "Ittefaq Hospital",
+      "city": "Lahore",
+      "area": "H-Block, Model Town",
+      "specialists_available": ["Cardiology", "Orthopedics", "Gastroenterology", "General Surgery", "Urology", "Pulmonology"],
+      "distance_km": 4.5,
+      "insurance_accepted": ["Jubilee Health Insurance", "Adamjee Insurance", "EFU Health"],
+      "consultation_fee": 2500,
+      "rating": 4.4,
+      "waiting_time_minutes": 28,
+      "has_emergency_services": true,
+      "doctors": [
+        {
+          "id": "dr-bilal-aslam",
+          "name": "Dr. Bilal Aslam",
+          "specialization": "Orthopedics",
+          "qualifications": "MBBS, FCPS (Orthopedics)",
+          "years_experience": 13,
+          "rating": 4.4,
+          "fee": 3000,
+          "available_days": ["Mon", "Wed", "Fri"],
+          "time_slots": ["09:30 AM", "12:00 PM", "03:30 PM"],
+          "languages_spoken": ["Urdu", "English", "Punjabi"]
+        },
+        {
+          "id": "dr-sonia-yousaf",
+          "name": "Dr. Sonia Yousaf",
+          "specialization": "Urology",
+          "qualifications": "MBBS, FCPS (Urology)",
+          "years_experience": 11,
+          "rating": 4.3,
+          "fee": 2800,
+          "available_days": ["Tue", "Thu", "Sat"],
+          "time_slots": ["10:00 AM", "01:00 PM", "03:00 PM"],
+          "languages_spoken": ["Urdu", "English"]
+        }
+      ]
+    },
+    {
+      "name": "Fatima Memorial Hospital",
+      "city": "Lahore",
+      "area": "Shadman, Ferozepur Road",
+      "specialists_available": ["Cardiology", "Neurology", "Gastroenterology", "Gynecology", "Pediatrics", "Dermatology"],
+      "distance_km": 3.0,
+      "insurance_accepted": ["Jubilee Health Insurance", "Adamjee Insurance", "EFU Health", "IGI Insurance"],
+      "consultation_fee": 2000,
+      "rating": 4.5,
+      "waiting_time_minutes": 32,
+      "has_emergency_services": true,
+      "doctors": [
+        {
+          "id": "dr-amna-saeed",
+          "name": "Dr. Amna Saeed",
+          "specialization": "Gynecology",
+          "qualifications": "MBBS, FCPS (Gynecology), MRCOG (UK)",
+          "years_experience": 15,
+          "rating": 4.6,
+          "fee": 2500,
+          "available_days": ["Mon", "Tue", "Thu"],
+          "time_slots": ["09:00 AM", "11:00 AM", "02:00 PM"],
+          "languages_spoken": ["Urdu", "English", "Punjabi"]
+        },
+        {
+          "id": "dr-waqar-hussain",
+          "name": "Dr. Waqar Hussain",
+          "specialization": "Neurology",
+          "qualifications": "MBBS, FCPS (Neurology)",
+          "years_experience": 14,
+          "rating": 4.4,
+          "fee": 2800,
+          "available_days": ["Wed", "Fri", "Sat"],
+          "time_slots": ["10:00 AM", "01:00 PM", "03:30 PM"],
+          "languages_spoken": ["Urdu", "English"]
+        }
+      ]
+    },
+    {
+      "name": "National Institute of Cardiovascular Diseases",
+      "city": "Karachi",
+      "area": "Rafiqui Shaheed Road, Cantt",
+      "specialists_available": ["Cardiology", "Cardiac Surgery", "Interventional Cardiology"],
+      "distance_km": 5.8,
+      "insurance_accepted": ["Sehat Sahulat Program", "Jubilee Health Insurance", "Adamjee Insurance"],
+      "consultation_fee": 1200,
+      "rating": 4.6,
+      "waiting_time_minutes": 38,
+      "has_emergency_services": true,
+      "doctors": [
+        {
+          "id": "dr-saeed-ahmed",
+          "name": "Dr. Saeed Ahmed",
+          "specialization": "Cardiology",
+          "qualifications": "MBBS, FCPS (Cardiology), Fellowship Interventional Cardiology",
+          "years_experience": 25,
+          "rating": 4.7,
+          "fee": 1500,
+          "available_days": ["Mon", "Tue", "Wed", "Thu"],
+          "time_slots": ["09:00 AM", "11:00 AM", "01:00 PM"],
+          "languages_spoken": ["Urdu", "English"]
+        },
+        {
+          "id": "dr-kiran-shahid",
+          "name": "Dr. Kiran Shahid",
+          "specialization": "Cardiac Surgery",
+          "qualifications": "MBBS, FCPS (Cardiac Surgery)",
+          "years_experience": 12,
+          "rating": 4.5,
+          "fee": 2000,
+          "available_days": ["Mon", "Wed", "Fri"],
+          "time_slots": ["10:00 AM", "12:30 PM", "03:00 PM"],
+          "languages_spoken": ["Urdu", "English"]
+        }
+      ]
+    },
+    {
+      "name": "Maroof International Hospital",
+      "city": "Islamabad",
+      "area": "F-10 Markaz",
+      "specialists_available": ["Cardiology", "Neurology", "Orthopedics", "Gastroenterology", "Dermatology", "Pulmonology"],
+      "distance_km": 2.9,
+      "insurance_accepted": ["Jubilee Health Insurance", "EFU Health", "IGI Insurance"],
+      "consultation_fee": 3000,
+      "rating": 4.4,
+      "waiting_time_minutes": 26,
+      "has_emergency_services": true,
+      "doctors": [
+        {
+          "id": "dr-faisal-mirza",
+          "name": "Dr. Faisal Mirza",
+          "specialization": "Pulmonology",
+          "qualifications": "MBBS, FCPS (Pulmonology)",
+          "years_experience": 11,
+          "rating": 4.4,
+          "fee": 3500,
+          "available_days": ["Mon", "Wed", "Fri"],
+          "time_slots": ["09:00 AM", "11:00 AM", "02:00 PM"],
+          "languages_spoken": ["Urdu", "English"]
+        },
+        {
+          "id": "dr-urooj-fatima",
+          "name": "Dr. Urooj Fatima",
+          "specialization": "Gastroenterology",
+          "qualifications": "MBBS, FCPS (Gastroenterology)",
+          "years_experience": 8,
+          "rating": 4.3,
+          "fee": 3200,
+          "available_days": ["Tue", "Thu", "Sat"],
+          "time_slots": ["10:00 AM", "01:00 PM", "03:30 PM"],
+          "languages_spoken": ["Urdu", "English"]
+        }
+      ]
+    },
+    {
+      "name": "Doctors Hospital",
+      "city": "Lahore",
+      "area": "152/3, Block C-3, Johar Town",
+      "specialists_available": ["Cardiology", "Orthopedics", "Gastroenterology", "Dermatology", "Urology", "Endocrinology"],
+      "distance_km": 4.8,
+      "insurance_accepted": ["Jubilee Health Insurance", "Adamjee Insurance", "EFU Health", "IGI Insurance"],
+      "consultation_fee": 2800,
+      "rating": 4.3,
+      "waiting_time_minutes": 30,
+      "has_emergency_services": true,
+      "doctors": [
+        {
+          "id": "dr-humayun-kabir",
+          "name": "Dr. Humayun Kabir",
+          "specialization": "Urology",
+          "qualifications": "MBBS, FCPS (Urology)",
+          "years_experience": 16,
+          "rating": 4.3,
+          "fee": 3200,
+          "available_days": ["Mon", "Tue", "Thu"],
+          "time_slots": ["09:00 AM", "11:30 AM", "02:30 PM"],
+          "languages_spoken": ["Urdu", "English", "Bengali"]
+        },
+        {
+          "id": "dr-mahnoor-ali",
+          "name": "Dr. Mahnoor Ali",
+          "specialization": "Dermatology",
+          "qualifications": "MBBS, FCPS (Dermatology)",
+          "years_experience": 7,
+          "rating": 4.4,
+          "fee": 2600,
+          "available_days": ["Wed", "Fri", "Sat"],
+          "time_slots": ["10:00 AM", "01:00 PM", "04:00 PM"],
+          "languages_spoken": ["Urdu", "English"]
+        }
+      ]
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-const backendBaseUrl = import.meta.env.VITE_BACKEND_URL?.trim() || 'http://127.0.0.1:8001';
+import { API_BASE_URL as backendBaseUrl } from '../lib/api';
 
 export async function sendChatMessage(message, conversationHistory) {
   const response = await fetch(`${backendBaseUrl}/ai-chat/message`, {

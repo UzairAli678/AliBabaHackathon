@@ -16,8 +16,8 @@ import {
 
 import doctorIllustration from '../assets/illustrations/doctor.svg';
 import nurseIllustration from '../assets/illustrations/nurse.svg';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+import appointmentBanner from '../assets/illustrations/Appoinment.jpg';
+import { API_BASE_URL } from '../lib/api';
 
 const defaultHospitals = [
   {
@@ -258,15 +258,36 @@ export default function AppointmentsPage() {
 
   return (
     <div className="space-y-8">
+      <section className="relative overflow-hidden rounded-[32px] border border-border shadow-soft">
+        <img
+          src={appointmentBanner}
+          alt="Hospital appointment"
+          className="h-56 w-full object-cover sm:h-72 lg:h-80"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/85 via-slate-900/45 to-slate-900/10" />
+        <div className="absolute inset-0 flex flex-col justify-end p-6 sm:p-8 lg:p-10">
+          <div className="inline-flex w-fit items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-sm font-medium text-white backdrop-blur">
+            <CalendarDaysIcon className="h-4 w-4" />
+            Appointments
+          </div>
+          <h1 className="mt-4 max-w-2xl text-3xl font-medium tracking-tight text-white sm:text-4xl lg:text-5xl">
+            Book your appointment
+          </h1>
+          <p className="mt-3 max-w-2xl text-sm leading-7 text-white/85 sm:text-base lg:leading-8">
+            Pick a hospital, a doctor, and a time that works for you. Confirm the visit in a single flow with a clear summary and a warm booking confirmation.
+          </p>
+        </div>
+      </section>
+
       <section className="grid gap-8 rounded-[32px] border border-border bg-white p-6 shadow-card lg:grid-cols-[1.05fr_0.95fr] lg:p-8">
         <div className="flex flex-col justify-center">
           <div className="inline-flex w-fit items-center gap-2 rounded-full bg-tealSoft px-4 py-2 text-sm font-medium text-primary">
             <CalendarDaysIcon className="h-4 w-4" />
             Appointments
           </div>
-          <h1 className="mt-5 max-w-2xl text-4xl font-medium tracking-tight text-heading sm:text-5xl">
+          <h2 className="mt-5 max-w-2xl text-4xl font-medium tracking-tight text-heading sm:text-5xl">
             Book your appointment
-          </h1>
+          </h2>
           <p className="mt-4 max-w-2xl text-lg leading-8 text-muted">
             Pick a hospital, a doctor, and a time that works for you. Confirm the visit in a single flow with a clear summary and a warm booking confirmation.
           </p>

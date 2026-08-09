@@ -1,66 +1,70 @@
+# Illustrative sample data: real Pakistani institution names are used for demo
+# realism only. Fees, ratings, waiting times, and doctor details are fabricated
+# and are NOT live/verified data. See backend/data/hospitals_pakistan.json.
+import json
+from pathlib import Path
+
 from fastapi import APIRouter
 
 router = APIRouter(prefix="/smart-care-navigator", tags=["smart-care-navigator"])
 
-MOCK_HOSPITALS = [
-    {
-        "name": "City Care Hospital",
-        "distance_km": 2.1,
-        "address": "Main Boulevard, Lahore",
-        "rating": 4.8,
-        "style": "Specialty",
-    },
-    {
-        "name": "Sunrise Clinic",
-        "distance_km": 4.7,
-        "address": "DHA Phase 6, Lahore",
-        "rating": 4.6,
-        "style": "Community",
-    },
-    {
-        "name": "Teal Medical Center",
-        "distance_km": 6.2,
-        "address": "Gulberg III, Lahore",
-        "rating": 4.7,
-        "style": "Academic",
-    },
-]
+_DATA_PATH = Path(__file__).resolve().parents[1] / "data" / "hospitals_pakistan.json"
 
-MOCK_DOCTORS = [
-    {
-        "id": "dr-amina-khan",
-        "name": "Dr. Amina Khan",
-        "specialization": "Cardiology",
-        "hospital_name": "City Care Hospital",
-        "consultation_fee": 3500,
-        "available_days": ["Mon", "Wed", "Fri"],
-        "time_slots": ["09:00 AM", "10:30 AM", "02:00 PM"],
-    },
-    {
-        "id": "dr-sara-fatima",
-        "name": "Dr. Sara Fatima",
-        "specialization": "Neurology",
-        "hospital_name": "Teal Medical Center",
-        "consultation_fee": 4200,
-        "available_days": ["Tue", "Thu", "Sat"],
-        "time_slots": ["08:30 AM", "11:00 AM", "03:30 PM"],
-    },
-    {
-        "id": "dr-bilal-hassan",
-        "name": "Dr. Bilal Hassan",
-        "specialization": "Orthopedics",
-        "hospital_name": "Sunrise Clinic",
-        "consultation_fee": 3000,
-        "available_days": ["Mon", "Thu", "Sun"],
-        "time_slots": ["09:30 AM", "01:00 PM", "04:00 PM"],
-    },
-]
+
+def _load_hospitals() -> list[dict]:
+    with open(_DATA_PATH, encoding="utf-8") as fh:
+        return json.load(fh)["hospitals"]
+
+
+def _flatten_doctors(hospitals: list[dict]) -> list[dict]:
+    doctors: list[dict] = []
+    for hospital in hospitals:
+        for doc in hospital.get("doctors", []):
+            doctors.append(
+                {
+                    "id": doc["id"],
+                    "name": doc["name"],
+                    "specialization": doc["specialization"],
+                    "hospital_name": hospital["name"],
+                    "consultation_fee": doc["fee"],
+                    "available_days": doc["available_days"],
+                    "time_slots": doc["time_slots"],
+                    "qualifications": doc.get("qualifications", ""),
+                    "years_experience": doc.get("years_experience", 0),
+                    "rating": doc.get("rating", 0),
+                    "languages_spoken": doc.get("languages_spoken", []),
+                }
+            )
+    return doctors
+
+
+HOSPITALS = _load_hospitals()
+DOCTORS = _flatten_doctors(HOSPITALS)
+
+# Backward-compatible aliases used by appointments.py
+MOCK_HOSPITALS = HOSPITALS
+MOCK_DOCTORS = DOCTORS
+
+
+def _hospital_summary(h: dict) -> dict:
+    return {
+        "name": h["name"],
+        "city": h["city"],
+        "area": h["area"],
+        "distance_km": h["distance_km"],
+        "rating": h["rating"],
+        "consultation_fee": h["consultation_fee"],
+        "insurance_accepted": h["insurance_accepted"],
+        "waiting_time_minutes": h["waiting_time_minutes"],
+        "has_emergency_services": h["has_emergency_services"],
+        "specialists_available": h["specialists_available"],
+    }
 
 
 @router.get("")
 def get_smart_care_navigator() -> dict:
     return {
         "suggested_specialty": "General Medicine",
-        "nearby_hospitals": MOCK_HOSPITALS,
-        "doctors": MOCK_DOCTORS,
+        "nearby_hospitals": [_hospital_summary(h) for h in HOSPITALS],
+        "doctors": DOCTORS,
     }

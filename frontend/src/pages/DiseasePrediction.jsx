@@ -7,8 +7,7 @@ import {
   XMarkIcon,
   ArrowTopRightOnSquareIcon
 } from '@heroicons/react/24/outline';
-
-const backendBaseUrl = import.meta.env.VITE_BACKEND_URL?.trim() || 'http://127.0.0.1:8001';
+import { API_BASE_URL as backendBaseUrl } from '../lib/api';
 
 function inferSpecialistForDisease(disease) {
   const lowerDisease = disease.toLowerCase();

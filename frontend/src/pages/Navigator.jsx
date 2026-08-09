@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { ArrowTopRightOnSquareIcon, CalendarDaysIcon, MapPinIcon, StarIcon } from '@heroicons/react/24/outline';
 import TextField from '../components/TextField';
+import { API_BASE_URL } from '../lib/api';
 
 const symptomPresets = [
   'fever',
@@ -15,37 +16,6 @@ const symptomPresets = [
   'dizziness',
   'chest pain',
   'joint pain'
-]
-
-const nearbyOptions = [
-  { name: 'Northside General Clinic', distance: '1.2 mi', rating: 4.8, cost: 'PKR 85 - PKR 120' },
-  { name: 'Harbor Urgent Care', distance: '2.0 mi', rating: 4.6, cost: 'PKR 110 - PKR 160' },
-  { name: 'Cedar Family Medicine', distance: '3.4 mi', rating: 4.9, cost: 'PKR 95 - PKR 140' },
-  { name: 'City Specialty Center', distance: '4.1 mi', rating: 4.7, cost: 'PKR 140 - PKR 220' }
-];
-
-const doctorOptions = [
-  {
-    hospital_name: 'City Care Hospital',
-    doctor_name: 'Dr. Amina Khan',
-    specialization: 'Cardiology',
-    consultation_fee: 3500,
-    appointment_date_hint: 'Choose a date that matches the doctor availability.',
-  },
-  {
-    hospital_name: 'Teal Medical Center',
-    doctor_name: 'Dr. Sara Fatima',
-    specialization: 'Neurology',
-    consultation_fee: 4200,
-    appointment_date_hint: 'Tue, Thu, or Sat work best for this doctor.',
-  },
-  {
-    hospital_name: 'Sunrise Clinic',
-    doctor_name: 'Dr. Bilal Hassan',
-    specialization: 'Orthopedics',
-    consultation_fee: 3000,
-    appointment_date_hint: 'Mon, Thu, or Sun work best for this doctor.',
-  },
 ];
 
 function inferUrgency(sourceText) {
@@ -110,6 +80,21 @@ export default function NavigatorPage() {
   const passedSpecialist = location.state?.specialist || null;
   const [symptomText, setSymptomText] = useState(assessment?.symptoms?.join(', ') || '');
   const [selectedPreset, setSelectedPreset] = useState('');
+  const [hospitals, setHospitals] = useState([]);
+  const [doctors, setDoctors] = useState([]);
+
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/smart-care-navigator`)
+      .then((response) => response.json())
+      .then((data) => {
+        setHospitals(Array.isArray(data.nearby_hospitals) ? data.nearby_hospitals : []);
+        setDoctors(Array.isArray(data.doctors) ? data.doctors : []);
+      })
+      .catch(() => {
+        setHospitals([]);
+        setDoctors([]);
+      });
+  }, []);
 
   const sourceText = useMemo(() => {
     const parts = [selectedPreset, symptomText].filter(Boolean);
@@ -119,7 +104,7 @@ export default function NavigatorPage() {
   const urgency = assessment?.urgency || inferUrgency(sourceText);
   const specialist = passedSpecialist || assessment?.suggestedSpecialist || inferSpecialist(sourceText);
   const guidance = buildGuidance(urgency);
-  const bookableDoctor = doctorOptions.find((option) => option.specialization === specialist) || doctorOptions[0];
+  const bookableDoctor = doctors.find((option) => option.specialization === specialist) || doctors[0] || null;
 
   const summaryText = assessment
     ? `Based on your assessment, your risk level is ${assessment.riskLevel} and the current urgency is ${assessment.urgency}.`
@@ -183,14 +168,14 @@ export default function NavigatorPage() {
           </div>
 
           <div className="grid gap-5 md:grid-cols-2">
-            {nearbyOptions.map((option) => (
+            {hospitals.slice(0, 4).map((option) => (
               <article key={option.name} className="rounded-[24px] border border-border bg-white p-5 shadow-card">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <h4 className="text-lg font-medium tracking-tight text-heading">{option.name}</h4>
                     <div className="mt-1 flex items-center gap-2 text-sm text-muted">
                       <MapPinIcon className="h-4 w-4" />
-                      {option.distance}
+                      {option.area}, {option.city} · {option.distance_km} km
                     </div>
                   </div>
                   <div className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-3 py-1 text-sm font-medium text-caution">
@@ -200,8 +185,8 @@ export default function NavigatorPage() {
                 </div>
                 <div className="mt-4 grid grid-cols-2 gap-3 text-sm text-muted">
                   <div className="rounded-2xl bg-slate-50 p-3">
-                    <div className="text-xs uppercase tracking-[0.2em] text-muted">Estimated cost</div>
-                    <div className="mt-1 font-medium text-heading">{option.cost}</div>
+                    <div className="text-xs uppercase tracking-[0.2em] text-muted">Consultation fee</div>
+                    <div className="mt-1 font-medium text-heading">Rs. {option.consultation_fee}</div>
                   </div>
                   <div className="rounded-2xl bg-slate-50 p-3">
                     <div className="text-xs uppercase tracking-[0.2em] text-muted">Care type</div>
@@ -229,25 +214,29 @@ export default function NavigatorPage() {
                   We will pass the selected hospital and doctor into the booking flow so the appointment page can auto-fill the summary.
                 </p>
               </div>
-              <Link
-                to="/appointments"
-                state={{
-                  appointmentSelection: {
-                    hospital_name: bookableDoctor.hospital_name,
-                    doctor_name: bookableDoctor.doctor_name,
-                    specialization: bookableDoctor.specialization,
-                    consultation_fee: bookableDoctor.consultation_fee,
-                  }
-                }}
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-medium text-white shadow-soft transition hover:opacity-90"
-              >
-                <CalendarDaysIcon className="h-4 w-4" />
-                Book Appointment
-              </Link>
+              {bookableDoctor ? (
+                <Link
+                  to="/appointments"
+                  state={{
+                    appointmentSelection: {
+                      hospital_name: bookableDoctor.hospital_name,
+                      doctor_name: bookableDoctor.name,
+                      specialization: bookableDoctor.specialization,
+                      consultation_fee: bookableDoctor.consultation_fee,
+                    }
+                  }}
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-medium text-white shadow-soft transition hover:opacity-90"
+                >
+                  <CalendarDaysIcon className="h-4 w-4" />
+                  Book Appointment
+                </Link>
+              ) : null}
             </div>
-            <div className="mt-4 rounded-2xl border border-teal-200 bg-teal-50 px-4 py-3 text-sm text-primary">
-              {bookableDoctor.doctor_name} at {bookableDoctor.hospital_name} · {bookableDoctor.specialization} · {formatCurrency ? '' : ''}
-            </div>
+            {bookableDoctor ? (
+              <div className="mt-4 rounded-2xl border border-teal-200 bg-teal-50 px-4 py-3 text-sm text-primary">
+                {bookableDoctor.name} at {bookableDoctor.hospital_name} · {bookableDoctor.specialization} · Rs. {bookableDoctor.consultation_fee}
+              </div>
+            ) : null}
           </div>
         </div>
 
