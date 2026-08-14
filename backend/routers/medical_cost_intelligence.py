@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from typing import Any
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from google import genai
 from google.genai import types
 from pydantic import BaseModel, Field
@@ -130,8 +130,12 @@ def _scale_range(cost_range: tuple[float, float], factor: float) -> tuple[int, i
 def _estimate_range(predicted_disease: str, treatment_type: str, selected_hospital: str | None = None) -> dict[str, Any]:
     specialist = _specialist_for_disease(predicted_disease)
     treatment_key = treatment_type.strip().lower()
-    cost_band = _TREATMENT_COST_BANDS.get(treatment_key, _TREATMENT_COST_BANDS['consultation only'])
+    if treatment_key not in _TREATMENT_COST_BANDS:
+        raise ValueError(f'Unknown treatment type: {treatment_type}')
+    cost_band = _TREATMENT_COST_BANDS[treatment_key]
     hospital = _find_hospital(selected_hospital)
+    if selected_hospital and not hospital:
+        raise ValueError(f'Unknown hospital selection: {selected_hospital}')
     doctor = _matched_doctor(hospital, specialist) if hospital else None
     factor = _provider_cost_factor(hospital)
 
@@ -174,7 +178,10 @@ class CostEstimateResponse(BaseModel):
 
 @router.post('/estimate', response_model=CostEstimateResponse)
 def estimate_cost(payload: CostEstimateRequest) -> dict[str, Any]:
-    return _estimate_range(payload.predicted_disease, payload.treatment_type, payload.selected_hospital)
+    try:
+        return _estimate_range(payload.predicted_disease, payload.treatment_type, payload.selected_hospital)
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
 
 
 @router.get('/hospitals')
@@ -224,7 +231,6 @@ def affordability_analysis(payload: AffordabilityAnalysisRequest) -> dict[str, A
     affordability_score = 100
     affordability_score -= min(income_ratio * 70, 60)
     affordability_score -= min((1 - min(savings_ratio, 1)) * 20, 20)
-    affordability_score -= min((payload.insurance_coverage_percent / 100) * 10, 10)
     affordability_score = max(0, min(100, int(round(affordability_score))))
 
     if affordability_score >= 80:

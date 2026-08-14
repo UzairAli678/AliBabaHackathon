@@ -15,6 +15,7 @@ export default function NavigatorPage() {
   const navigate = useNavigate();
   const storedContext = useCareContext((state) => state.latestCareContext);
   const rememberSelectedHospital = useCareContext((state) => state.setSelectedHospital);
+  const rememberAppointmentSelection = useCareContext((state) => state.setAppointmentSelection);
   const routeAssessment = location.state?.assessment;
   const careContext = location.state?.careContext || storedContext || (routeAssessment ? {
     disease: routeAssessment.topDisease,
@@ -46,8 +47,20 @@ export default function NavigatorPage() {
       if (!response.ok) throw new Error(payload.detail || 'Unable to load recommendations.');
       setData(payload);
       setSelectedHospitalId(payload.featured_hospital?.id || '');
+      if (payload.featured_hospital) {
+        rememberSelectedHospital({ id: payload.featured_hospital.id, name: payload.featured_hospital.name });
+      }
     }).catch((requestError) => setError(requestError.message));
-  }, [careContext?.disease, careContext?.specialist, careContext?.riskLevel, navigate]);
+  }, [careContext?.disease, careContext?.specialist, careContext?.riskLevel, navigate, rememberSelectedHospital]);
+
+  const rememberBookingHandoff = (hospital, doctor) => {
+    rememberSelectedHospital({ id: hospital.id, name: hospital.name });
+    rememberAppointmentSelection({
+      hospital_id: hospital.id,
+      doctor_id: doctor.id,
+      recommended_specialist: careContext.specialist
+    });
+  };
 
   const topRecommendations = useMemo(() => {
     if (!data) return [];
@@ -125,7 +138,7 @@ export default function NavigatorPage() {
                   <Link
                     to="/appointments"
                     state={{ appointmentSelection: { hospital_id: hospital.id, doctor_id: doctor.id, recommended_specialist: careContext.specialist } }}
-                    onClick={() => rememberSelectedHospital({ id: hospital.id, name: hospital.name })}
+                    onClick={() => rememberBookingHandoff(hospital, doctor)}
                     className="mt-5 inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-medium text-white"
                   >
                     <CalendarDaysIcon className="h-4 w-4" />
@@ -138,7 +151,7 @@ export default function NavigatorPage() {
 
           <section className="grid gap-6 lg:grid-cols-3">
             <article className="rounded-[28px] border border-border bg-white p-6 shadow-card"><h3 className="text-xl font-medium text-heading">What to expect</h3><ul className="mt-4 space-y-3 text-sm leading-7 text-muted">{data.what_to_expect.map((item) => <li key={item} className="rounded-2xl bg-slate-50 p-3">{item}</li>)}</ul></article>
-            <article className="rounded-[28px] border border-border bg-white p-6 shadow-card"><h3 className="text-xl font-medium text-heading">Estimated cost preview</h3><p className="mt-5 text-2xl font-medium text-heading">{formatPKR(data.cost_preview.min)} – {formatPKR(data.cost_preview.max)}</p><p className="mt-2 text-sm text-muted">Rough consultation and labs estimate.</p><Link to="/cost" className="mt-5 inline-flex text-sm font-medium text-primary hover:underline">See full cost breakdown</Link></article>
+            <article className="rounded-[28px] border border-border bg-white p-6 shadow-card"><h3 className="text-xl font-medium text-heading">Estimated cost preview</h3><p className="mt-5 text-2xl font-medium text-heading">{formatPKR(data.cost_preview.min)} – {formatPKR(data.cost_preview.max)}</p><p className="mt-2 text-sm text-muted">Rough consultation and labs estimate.</p><Link to="/cost" onClick={() => { if (selectedHospital) rememberSelectedHospital({ id: selectedHospital.id, name: selectedHospital.name }); }} className="mt-5 inline-flex text-sm font-medium text-primary hover:underline">See full cost breakdown</Link></article>
             <article className="rounded-[28px] border border-border bg-white p-6 shadow-card"><h3 className="text-xl font-medium text-heading">Questions to ask your doctor</h3><ul className="mt-4 space-y-3 text-sm leading-6 text-muted">{data.questions_to_ask.map((item) => <li key={item} className="flex gap-2"><span className="text-primary">•</span>{item}</li>)}</ul></article>
           </section>
 
@@ -148,14 +161,17 @@ export default function NavigatorPage() {
               const hospitalId = event.target.value;
               const hospital = data.nearby_hospitals.find((item) => item.id === hospitalId);
               setSelectedHospitalId(hospitalId);
-              if (hospital) rememberSelectedHospital({ id: hospital.id, name: hospital.name });
+              if (hospital) {
+                rememberSelectedHospital({ id: hospital.id, name: hospital.name });
+                rememberAppointmentSelection(null);
+              }
             }} className="mt-4 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-primary">
               {data.nearby_hospitals.map((hospital) => <option key={hospital.id} value={hospital.id}>{hospital.name} — {hospital.city}</option>)}
             </select>
             {selectedHospital ? (
               <div className="mt-5 rounded-[24px] bg-slate-50 p-5">
                 <div className="flex justify-between gap-3"><div><h4 className="text-xl font-medium text-heading">{selectedHospital.name}</h4><p className="mt-1 text-sm text-muted">{selectedHospital.area}, {selectedHospital.city}</p></div><span className="text-amber-700">★ {selectedHospital.rating}</span></div>
-                <div className="mt-4 grid gap-3 md:grid-cols-2">{selectedDoctors.map((doctor) => <div key={doctor.id} className="rounded-2xl bg-white p-4 shadow-card"><div className="font-medium text-heading">{doctor.name}</div><div className="mt-1 text-sm text-primary">{doctor.specialization}</div><div className="mt-2 text-sm text-muted">{doctor.qualification} · {doctor.years_experience} years</div><Link to="/appointments" state={{ appointmentSelection: { hospital_id: selectedHospital.id, doctor_id: doctor.id, recommended_specialist: careContext.specialist } }} className="mt-3 inline-flex text-sm font-medium text-primary hover:underline">Book this doctor</Link></div>)}</div>
+                <div className="mt-4 grid gap-3 md:grid-cols-2">{selectedDoctors.map((doctor) => <div key={doctor.id} className="rounded-2xl bg-white p-4 shadow-card"><div className="font-medium text-heading">{doctor.name}</div><div className="mt-1 text-sm text-primary">{doctor.specialization}</div><div className="mt-2 text-sm text-muted">{doctor.qualification} · {doctor.years_experience} years</div><Link to="/appointments" state={{ appointmentSelection: { hospital_id: selectedHospital.id, doctor_id: doctor.id, recommended_specialist: careContext.specialist } }} onClick={() => rememberBookingHandoff(selectedHospital, doctor)} className="mt-3 inline-flex text-sm font-medium text-primary hover:underline">Book this doctor</Link></div>)}</div>
               </div>
             ) : null}
           </section>

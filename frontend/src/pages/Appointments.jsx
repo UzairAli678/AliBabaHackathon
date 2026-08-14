@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   ArrowPathIcon,
   CalendarDaysIcon,
@@ -17,6 +18,7 @@ import {
 import bookingConfirmedIllustration from '../assets/illustrations/booking-confirmed.png';
 import appointmentBanner from '../assets/illustrations/appointment.jpeg';
 import { API_BASE_URL } from '../lib/api';
+import useCareContext from '../store/useCareContext';
 
 const emptyForm = {
   hospital_id: '',
@@ -64,6 +66,9 @@ function getAppointmentTypeTone(type) {
 }
 
 export default function AppointmentsPage() {
+  const location = useLocation();
+  const storedAppointmentSelection = useCareContext((state) => state.appointmentSelection);
+  const pendingSelection = location.state?.appointmentSelection || storedAppointmentSelection;
   const [hospitals, setHospitals] = useState([]);
   const [doctors, setDoctors] = useState([]);
   const [hospitalSearch, setHospitalSearch] = useState('');
@@ -80,7 +85,6 @@ export default function AppointmentsPage() {
   const [recommendedSpecialist, setRecommendedSpecialist] = useState('');
 
   useEffect(() => {
-    const pendingSelection = window.history.state?.usr?.appointmentSelection || null;
     const specialist = pendingSelection?.recommended_specialist || '';
     setRecommendedSpecialist(specialist);
     const catalogUrl = specialist
@@ -109,7 +113,7 @@ export default function AppointmentsPage() {
         consultation_fee: matchedDoctor.consultation_fee,
       }));
       }).catch(() => { setHospitals([]); setDoctors([]); });
-  }, []);
+  }, [pendingSelection?.hospital_id, pendingSelection?.doctor_id, pendingSelection?.recommended_specialist]);
 
   useEffect(() => {
     fetch(`${API_BASE_URL}/appointments/my-appointments`)

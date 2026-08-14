@@ -62,15 +62,16 @@ export default function EmergencyPage() {
 
           <div className="flex flex-col gap-3">
             <a
-              href="tel:911"
+              href="tel:1122"
               className="inline-flex items-center justify-center gap-2 rounded-full bg-critical px-6 py-4 text-base font-medium text-white shadow-soft transition hover:opacity-90"
             >
               <PhoneIcon className="h-5 w-5" />
-              Call Emergency Services
+              Call Rescue 1122
             </a>
             <div className="rounded-2xl border border-red-200 bg-white px-4 py-3 text-sm font-medium text-critical">
               This is not a substitute for professional emergency care. Call emergency services immediately for serious situations.
             </div>
+            <p className="text-center text-xs leading-5 text-muted">Emergency numbers shown are for Pakistan.</p>
           </div>
         </div>
       </section>
@@ -102,11 +103,11 @@ export default function EmergencyPage() {
         </p>
         <div className="mt-5 flex flex-wrap gap-3">
           <a
-            href="tel:911"
+            href="tel:1122"
             className="inline-flex items-center justify-center gap-2 rounded-full bg-critical px-5 py-3 text-sm font-medium text-white shadow-soft transition hover:opacity-90"
           >
             <PhoneIcon className="h-4 w-4" />
-            Call Emergency Services
+            Call Rescue 1122
           </a>
           <Link
             to="/navigator"

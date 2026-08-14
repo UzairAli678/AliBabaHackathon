@@ -7,7 +7,7 @@ import logging
 from google import genai
 from google.genai import types
 from fastapi import APIRouter
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 router = APIRouter(prefix='/ai-chat', tags=['ai-chat'])
 logger = logging.getLogger(__name__)
@@ -39,6 +39,14 @@ class ChatMessageRequest(BaseModel):
     message: str = Field(..., min_length=1)
     conversation_history: list[ConversationTurn] = Field(default_factory=list)
     user_name: str | None = Field(default=None, max_length=80)
+
+    @field_validator('message')
+    @classmethod
+    def reject_blank_message(cls, message: str) -> str:
+        cleaned_message = message.strip()
+        if not cleaned_message:
+            raise ValueError('Message must contain non-whitespace characters.')
+        return cleaned_message
 
 
 class ChatMessageResponse(BaseModel):

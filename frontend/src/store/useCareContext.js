@@ -5,11 +5,14 @@ const useCareContext = create(persist(
   (set) => ({
     latestCareContext: null,
     selectedHospital: null,
+    appointmentSelection: null,
     diseasePredictionSession: { selectedSymptoms: [], result: null },
     setLatestCareContext: (latestCareContext) => set({ latestCareContext }),
     clearLatestCareContext: () => set({ latestCareContext: null }),
     setSelectedHospital: (selectedHospital) => set({ selectedHospital }),
     clearSelectedHospital: () => set({ selectedHospital: null }),
+    setAppointmentSelection: (appointmentSelection) => set({ appointmentSelection }),
+    clearAppointmentSelection: () => set({ appointmentSelection: null }),
     setDiseasePredictionSession: (diseasePredictionSession) => set({ diseasePredictionSession }),
     clearDiseasePredictionSession: () => set({ diseasePredictionSession: { selectedSymptoms: [], result: null } })
   }),

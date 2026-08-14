@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any
 from uuid import uuid4
 
@@ -91,6 +91,9 @@ def _validate_booking(payload: AppointmentBookRequest) -> tuple[dict, dict]:
     except ValueError as exc:
         raise HTTPException(status_code=400, detail="Invalid appointment date") from exc
 
+    if appointment_date.date() < date.today():
+        raise HTTPException(status_code=400, detail="Appointment date cannot be in the past")
+
     selected_day = appointment_date.strftime("%a")
     if selected_day not in doctor["available_days"]:
         days = ", ".join(doctor["available_days"])
@@ -107,6 +110,17 @@ def _validate_booking(payload: AppointmentBookRequest) -> tuple[dict, dict]:
 @router.post("/book", response_model=AppointmentRecord)
 def book_appointment(payload: AppointmentBookRequest) -> AppointmentRecord:
     hospital, doctor = _validate_booking(payload)
+    has_conflict = any(
+        booking.doctor_id == payload.doctor_id
+        and booking.appointment_date == payload.appointment_date
+        and booking.time_slot == payload.time_slot
+        for booking in _session_bookings
+    )
+    if has_conflict:
+        raise HTTPException(
+            status_code=400,
+            detail="This doctor is already booked for the selected date and time slot",
+        )
     confirmation_message = _generate_confirmation_message(payload, hospital, doctor)
 
     record = AppointmentRecord(

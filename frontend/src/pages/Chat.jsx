@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { PaperAirplaneIcon, ShieldCheckIcon, SparklesIcon } from '@heroicons/react/24/outline';
 import ChatBubble from '../components/ChatBubble';
 import { sendChatMessage } from '../api/chat';
@@ -94,6 +95,7 @@ export default function ChatPage() {
   }, [messages, loading]);
 
   const conversationHistory = messages.map(({ role, content }) => ({ role, content }));
+  const emergencyActive = messages.some((message) => message.emergencyDetected);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -185,6 +187,21 @@ export default function ChatPage() {
           </div>
 
           {error ? <div className="mx-4 mb-3 rounded-2xl border border-critical/20 bg-rose-50 px-4 py-3 text-sm text-critical sm:mx-6">{error}</div> : null}
+
+          {emergencyActive ? (
+            <div className="mx-4 mb-3 flex flex-col gap-3 rounded-2xl border-2 border-critical bg-rose-50 px-4 py-4 text-sm text-rose-900 shadow-card sm:mx-6 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <div className="font-semibold">This may be a medical emergency</div>
+                <p className="mt-1 text-rose-800">Seek urgent medical care now or open Emergency Mode for immediate guidance.</p>
+              </div>
+              <Link
+                to="/emergency"
+                className="inline-flex shrink-0 items-center justify-center rounded-full bg-critical px-4 py-2.5 text-xs font-semibold text-white shadow-soft transition hover:opacity-90"
+              >
+                Emergency Mode
+              </Link>
+            </div>
+          ) : null}
 
           <MessageComposer
             value={draft}
