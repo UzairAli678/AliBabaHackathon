@@ -30,6 +30,7 @@ import ProfilePage from './pages/Profile';
 import SignInPage from './pages/SignInPage';
 import SignUpPage from './pages/SignUpPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 import CostIntelligencePage from './pages/CostIntelligence';
 import AppointmentsPage from './pages/Appointments';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -425,7 +426,7 @@ function AppRoutes() {
           </GuestOnlyRoute>
         }
       />
-      <Route path="/cost" element={<CostIntelligencePage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route
         element={
           <ProtectedRoute>

@@ -14,66 +14,13 @@ import {
   BellAlertIcon
 } from '@heroicons/react/24/outline';
 
-import doctorIllustration from '../assets/illustrations/doctor.svg';
-import nurseIllustration from '../assets/illustrations/nurse.svg';
-import appointmentBanner from '../assets/illustrations/Appoinment.jpg';
+import bookingConfirmedIllustration from '../assets/illustrations/booking-confirmed.png';
+import appointmentBanner from '../assets/illustrations/appointment.jpeg';
 import { API_BASE_URL } from '../lib/api';
 
-const defaultHospitals = [
-  {
-    name: 'City Care Hospital',
-    address: 'Main Boulevard, Lahore',
-    rating: 4.8,
-    style: 'Specialty',
-    distance_km: 2.1
-  },
-  {
-    name: 'Sunrise Clinic',
-    address: 'DHA Phase 6, Lahore',
-    rating: 4.6,
-    style: 'Community',
-    distance_km: 4.7
-  },
-  {
-    name: 'Teal Medical Center',
-    address: 'Gulberg III, Lahore',
-    rating: 4.7,
-    style: 'Academic',
-    distance_km: 6.2
-  }
-];
-
-const defaultDoctors = [
-  {
-    id: 'dr-amina-khan',
-    name: 'Dr. Amina Khan',
-    specialization: 'Cardiology',
-    hospital_name: 'City Care Hospital',
-    consultation_fee: 3500,
-    available_days: ['Mon', 'Wed', 'Fri'],
-    time_slots: ['09:00 AM', '10:30 AM', '02:00 PM']
-  },
-  {
-    id: 'dr-sara-fatima',
-    name: 'Dr. Sara Fatima',
-    specialization: 'Neurology',
-    hospital_name: 'Teal Medical Center',
-    consultation_fee: 4200,
-    available_days: ['Tue', 'Thu', 'Sat'],
-    time_slots: ['08:30 AM', '11:00 AM', '03:30 PM']
-  },
-  {
-    id: 'dr-bilal-hassan',
-    name: 'Dr. Bilal Hassan',
-    specialization: 'Orthopedics',
-    hospital_name: 'Sunrise Clinic',
-    consultation_fee: 3000,
-    available_days: ['Mon', 'Thu', 'Sun'],
-    time_slots: ['09:30 AM', '01:00 PM', '04:00 PM']
-  }
-];
-
 const emptyForm = {
+  hospital_id: '',
+  doctor_id: '',
   hospital_name: '',
   doctor_name: '',
   specialization: '',
@@ -117,10 +64,11 @@ function getAppointmentTypeTone(type) {
 }
 
 export default function AppointmentsPage() {
-  const [hospitals, setHospitals] = useState(defaultHospitals);
-  const [doctors, setDoctors] = useState(defaultDoctors);
+  const [hospitals, setHospitals] = useState([]);
+  const [doctors, setDoctors] = useState([]);
   const [hospitalSearch, setHospitalSearch] = useState('');
   const [doctorSearch, setDoctorSearch] = useState('');
+  const [hospitalSort, setHospitalSort] = useState('rating');
   const [selectedHospital, setSelectedHospital] = useState(null);
   const [selectedDoctor, setSelectedDoctor] = useState(null);
   const [formData, setFormData] = useState(emptyForm);
@@ -129,29 +77,38 @@ export default function AppointmentsPage() {
   const [bookingLoading, setBookingLoading] = useState(false);
   const [error, setError] = useState('');
   const [successBooking, setSuccessBooking] = useState(null);
+  const [recommendedSpecialist, setRecommendedSpecialist] = useState('');
 
   useEffect(() => {
     const pendingSelection = window.history.state?.usr?.appointmentSelection || null;
-    if (!pendingSelection) return;
-
-    const hospital = pendingSelection.hospital_name || pendingSelection.hospitalName;
-    const doctor = pendingSelection.doctor_name || pendingSelection.doctorName;
-    const fee = pendingSelection.consultation_fee || pendingSelection.consultationFee;
-    const specialization = pendingSelection.specialization || pendingSelection.specialty || '';
-
-    if (hospital && doctor) {
-      const matchedHospital = defaultHospitals.find((item) => item.name === hospital) || null;
-      const matchedDoctor = defaultDoctors.find((item) => item.name === doctor) || null;
+    const specialist = pendingSelection?.recommended_specialist || '';
+    setRecommendedSpecialist(specialist);
+    const catalogUrl = specialist
+      ? `${API_BASE_URL}/appointments/catalog?recommended_specialist=${encodeURIComponent(specialist)}`
+      : `${API_BASE_URL}/appointments/catalog`;
+    fetch(catalogUrl)
+      .then((response) => response.json())
+      .then((data) => {
+        const loadedHospitals = Array.isArray(data.hospitals) ? data.hospitals : [];
+        const loadedDoctors = Array.isArray(data.doctors) ? data.doctors : [];
+        setHospitals(loadedHospitals);
+        setDoctors(loadedDoctors);
+        if (!pendingSelection?.hospital_id || !pendingSelection?.doctor_id) return;
+        const matchedHospital = loadedHospitals.find((item) => item.id === pendingSelection.hospital_id) || null;
+        const matchedDoctor = loadedDoctors.find((item) => item.id === pendingSelection.doctor_id && item.hospital_id === pendingSelection.hospital_id) || null;
+        if (!matchedHospital || !matchedDoctor) return;
       setSelectedHospital(matchedHospital);
       setSelectedDoctor(matchedDoctor);
       setFormData((current) => ({
         ...current,
-        hospital_name: hospital,
-        doctor_name: doctor,
-        specialization,
-        consultation_fee: fee || matchedDoctor?.consultation_fee || '',
+        hospital_id: matchedHospital.id,
+        doctor_id: matchedDoctor.id,
+        hospital_name: matchedHospital.name,
+        doctor_name: matchedDoctor.name,
+        specialization: matchedDoctor.specialization,
+        consultation_fee: matchedDoctor.consultation_fee,
       }));
-    }
+      }).catch(() => { setHospitals([]); setDoctors([]); });
   }, []);
 
   useEffect(() => {
@@ -163,33 +120,52 @@ export default function AppointmentsPage() {
   }, []);
 
   const filteredHospitals = useMemo(() => {
-    const query = hospitalSearch.trim().toLowerCase();
-    if (!query) return hospitals;
-    return hospitals.filter((hospital) =>
-      [hospital.name, hospital.address, hospital.style].some((value) => value.toLowerCase().includes(query))
-    );
-  }, [hospitalSearch, hospitals]);
+    return [...hospitals].sort((a, b) => {
+      if (hospitalSort === 'distance') return a.distance_km - b.distance_km;
+      if (hospitalSort === 'affordability') return a.consultation_fee - b.consultation_fee;
+      return b.rating - a.rating;
+    });
+  }, [hospitalSort, hospitals]);
 
   const filteredDoctors = useMemo(() => {
     const query = doctorSearch.trim().toLowerCase();
     return doctors.filter((doctor) => {
       const matchesSearch = !query || [doctor.name, doctor.specialization, doctor.hospital_name].some((value) => value.toLowerCase().includes(query));
-      const matchesHospital = !selectedHospital || doctor.hospital_name === selectedHospital.name;
+      const matchesHospital = !selectedHospital || doctor.hospital_id === selectedHospital.id;
       return matchesSearch && matchesHospital;
     });
   }, [doctorSearch, doctors, selectedHospital]);
 
-  const availableSlots = useMemo(() => {
-    if (!selectedDoctor) return [];
-    return selectedDoctor.time_slots;
-  }, [selectedDoctor]);
+  const hospitalBadges = useMemo(() => {
+    if (!selectedHospital || !hospitals.length) return [];
+    const badges = [];
+    if (selectedHospital.rating === Math.max(...hospitals.map((item) => item.rating))) badges.push('Best Match');
+    if (selectedHospital.consultation_fee === Math.min(...hospitals.map((item) => item.consultation_fee))) badges.push('Most Affordable');
+    if (selectedHospital.distance_km === Math.min(...hospitals.map((item) => item.distance_km))) badges.push('Nearest');
+    if (selectedHospital.waiting_time_minutes === Math.min(...hospitals.map((item) => item.waiting_time_minutes))) badges.push('Fastest Appointment');
+    return badges;
+  }, [selectedHospital, hospitals]);
 
   const selectedDay = useMemo(() => getDayLabel(formData.appointment_date), [formData.appointment_date]);
+  const isDoctorAvailable = Boolean(selectedDoctor && selectedDay && selectedDoctor.available_days.includes(selectedDay));
+
+  const availableSlots = useMemo(() => {
+    if (!selectedDoctor || !selectedDay || !selectedDoctor.available_days.includes(selectedDay)) return [];
+    return selectedDoctor.time_slots;
+  }, [selectedDoctor, selectedDay]);
 
   const handleHospitalPick = (hospital) => {
+    if (!hospital) {
+      setSelectedHospital(null);
+      setSelectedDoctor(null);
+      setFormData(emptyForm);
+      return;
+    }
     setSelectedHospital(hospital);
     setFormData((current) => ({
       ...current,
+      hospital_id: hospital.id,
+      doctor_id: '',
       hospital_name: hospital.name,
       doctor_name: '',
       specialization: '',
@@ -203,13 +179,15 @@ export default function AppointmentsPage() {
     setSelectedDoctor(doctor);
     setFormData((current) => ({
       ...current,
+      hospital_id: doctor.hospital_id,
+      doctor_id: doctor.id,
       hospital_name: doctor.hospital_name,
       doctor_name: doctor.name,
       specialization: doctor.specialization,
       consultation_fee: doctor.consultation_fee,
       time_slot: ''
     }));
-    const hospital = hospitals.find((item) => item.name === doctor.hospital_name) || null;
+    const hospital = hospitals.find((item) => item.id === doctor.hospital_id) || null;
     setSelectedHospital(hospital);
   };
 
@@ -227,10 +205,8 @@ export default function AppointmentsPage() {
           Accept: 'application/json'
         },
         body: JSON.stringify({
-          hospital_name: formData.hospital_name,
-          doctor_name: formData.doctor_name,
-          specialization: formData.specialization,
-          consultation_fee: Number(formData.consultation_fee) || 0,
+          hospital_id: formData.hospital_id,
+          doctor_id: formData.doctor_id,
           appointment_date: formData.appointment_date,
           time_slot: formData.time_slot,
           appointment_type: formData.appointment_type,
@@ -258,56 +234,28 @@ export default function AppointmentsPage() {
 
   return (
     <div className="space-y-8">
-      <section className="relative overflow-hidden rounded-[32px] border border-border shadow-soft">
+      <section className="relative min-h-[360px] overflow-hidden rounded-[32px] border border-slate-200 shadow-soft sm:min-h-[430px] lg:min-h-[500px]">
         <img
           src={appointmentBanner}
-          alt="Hospital appointment"
-          className="h-56 w-full object-cover sm:h-72 lg:h-80"
+          alt="Doctor discussing care with a patient"
+          className="absolute inset-0 h-full w-full object-cover object-center"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/85 via-slate-900/45 to-slate-900/10" />
-        <div className="absolute inset-0 flex flex-col justify-end p-6 sm:p-8 lg:p-10">
-          <div className="inline-flex w-fit items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-sm font-medium text-white backdrop-blur">
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-900/65 to-slate-900/5" />
+        <div className="relative flex min-h-[360px] flex-col justify-end p-6 sm:min-h-[430px] sm:p-9 lg:min-h-[500px] lg:p-12">
+          <div className="inline-flex w-fit items-center gap-2 rounded-full border border-white/20 bg-white/15 px-4 py-2 text-sm font-medium text-white backdrop-blur-md">
             <CalendarDaysIcon className="h-4 w-4" />
-            Appointments
+            Simple, secure booking
           </div>
-          <h1 className="mt-4 max-w-2xl text-3xl font-medium tracking-tight text-white sm:text-4xl lg:text-5xl">
-            Book your appointment
+          <h1 className="mt-5 max-w-xl text-4xl font-medium tracking-[-0.035em] text-white sm:text-5xl lg:text-6xl">
+            Better care starts with the right appointment.
           </h1>
-          <p className="mt-3 max-w-2xl text-sm leading-7 text-white/85 sm:text-base lg:leading-8">
-            Pick a hospital, a doctor, and a time that works for you. Confirm the visit in a single flow with a clear summary and a warm booking confirmation.
+          <p className="mt-4 max-w-xl text-sm leading-7 text-white/85 sm:text-base lg:leading-8">
+            Choose a trusted hospital, find the right specialist, and reserve a time that works for you—all in one clear flow.
           </p>
-        </div>
-      </section>
-
-      <section className="grid gap-8 rounded-[32px] border border-border bg-white p-6 shadow-card lg:grid-cols-[1.05fr_0.95fr] lg:p-8">
-        <div className="flex flex-col justify-center">
-          <div className="inline-flex w-fit items-center gap-2 rounded-full bg-tealSoft px-4 py-2 text-sm font-medium text-primary">
+          <a href="#book-appointment" className="mt-7 inline-flex w-fit items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-900 shadow-lg transition hover:-translate-y-0.5 hover:bg-teal-50">
+            Book an appointment
             <CalendarDaysIcon className="h-4 w-4" />
-            Appointments
-          </div>
-          <h2 className="mt-5 max-w-2xl text-4xl font-medium tracking-tight text-heading sm:text-5xl">
-            Book your appointment
-          </h2>
-          <p className="mt-4 max-w-2xl text-lg leading-8 text-muted">
-            Pick a hospital, a doctor, and a time that works for you. Confirm the visit in a single flow with a clear summary and a warm booking confirmation.
-          </p>
-          <div className="mt-8 grid gap-3 sm:grid-cols-3">
-            <div className="rounded-2xl border border-border bg-slate-50 px-4 py-4">
-              <div className="text-sm font-medium text-heading">PKR pricing</div>
-              <div className="mt-1 text-sm text-muted">Consultation fees are shown in local currency.</div>
-            </div>
-            <div className="rounded-2xl border border-border bg-slate-50 px-4 py-4">
-              <div className="text-sm font-medium text-heading">Warm confirmation</div>
-              <div className="mt-1 text-sm text-muted">Gemini message or a static fallback.</div>
-            </div>
-            <div className="rounded-2xl border border-border bg-slate-50 px-4 py-4">
-              <div className="text-sm font-medium text-heading">Session bookings</div>
-              <div className="mt-1 text-sm text-muted">My Appointments updates instantly.</div>
-            </div>
-          </div>
-        </div>
-        <div className="flex items-center justify-center rounded-[28px] border border-border bg-gradient-to-br from-teal-50 to-slate-50 p-4">
-          <img src={doctorIllustration} alt="Doctor illustration" className="max-h-[360px] w-full object-contain" />
+          </a>
         </div>
       </section>
 
@@ -344,49 +292,30 @@ export default function AppointmentsPage() {
         </section>
       ) : null}
 
-      <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
+      <div id="book-appointment" className="grid scroll-mt-6 gap-6 xl:grid-cols-[0.95fr_1.05fr]">
         <section className="space-y-6 rounded-[28px] border border-border bg-white p-6 shadow-card sm:p-8">
           <div>
             <div className="text-sm font-medium uppercase tracking-[0.2em] text-primary">Choose hospital</div>
-            <div className="mt-2 flex items-center gap-2 rounded-2xl border border-border bg-slate-50 px-4 py-3">
-              <MagnifyingGlassIcon className="h-4 w-4 text-muted" />
-              <input
-                value={hospitalSearch}
-                onChange={(event) => setHospitalSearch(event.target.value)}
-                placeholder="Search hospitals"
-                className="w-full bg-transparent text-sm text-heading outline-none"
-              />
+            <div className="mt-3 grid gap-3 sm:grid-cols-[1fr_180px]">
+              <select value={selectedHospital?.id || ''} onChange={(event) => handleHospitalPick(hospitals.find((item) => item.id === event.target.value))} className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-heading outline-none focus:border-primary">
+                <option value="">Choose a hospital</option>
+                {filteredHospitals.map((hospital) => <option key={hospital.id} value={hospital.id}>{hospital.name} — {hospital.city}</option>)}
+              </select>
+              <select value={hospitalSort} onChange={(event) => setHospitalSort(event.target.value)} className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-heading outline-none focus:border-primary">
+                <option value="rating">Rating</option><option value="distance">Distance</option><option value="affordability">Affordability</option>
+              </select>
             </div>
           </div>
 
-          <div className="grid gap-4">
-            {filteredHospitals.map((hospital) => (
-              <button
-                key={hospital.name}
-                type="button"
-                onClick={() => handleHospitalPick(hospital)}
-                className={`rounded-[24px] border p-5 text-left transition ${selectedHospital?.name === hospital.name ? 'border-primary bg-primary/5 shadow-card' : 'border-border bg-white hover:border-primary/40'}`}
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <div className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1 text-xs font-medium text-muted">
-                      <BuildingOffice2Icon className="h-3.5 w-3.5" />
-                      {hospital.style}
-                    </div>
-                    <div className="mt-3 text-lg font-medium text-heading">{hospital.name}</div>
-                    <div className="mt-2 flex items-center gap-2 text-sm text-muted">
-                      <MapPinIcon className="h-4 w-4" />
-                      {hospital.address}
-                    </div>
-                  </div>
-                  <div className="rounded-full bg-emerald-50 px-3 py-1 text-sm font-medium text-emerald-700">{hospital.rating}</div>
-                </div>
-              </button>
-            ))}
-          </div>
+          {selectedHospital ? <div className="rounded-[24px] border border-primary/20 bg-teal-50/40 p-5">
+            <div className="flex items-start justify-between gap-4"><div><h3 className="text-xl font-medium text-heading">{selectedHospital.name}</h3><p className="mt-2 flex items-center gap-2 text-sm text-muted"><MapPinIcon className="h-4 w-4" />{selectedHospital.area}, {selectedHospital.city} · {selectedHospital.distance_km} km</p><div className="mt-3 flex flex-wrap gap-2">{hospitalBadges.map((badge) => <span key={badge} className="rounded-full border border-teal-200 bg-white px-3 py-1 text-xs font-medium text-primary">{badge}</span>)}</div></div><div className="rounded-full bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-700">★ {selectedHospital.rating}</div></div>
+            <div className="mt-4 flex flex-wrap gap-2"><span className="rounded-full bg-white px-3 py-1 text-xs text-heading">Insurance: {selectedHospital.insurance_accepted.join(', ')}</span><span className="rounded-full bg-rose-50 px-3 py-1 text-xs text-rose-700">{selectedHospital.has_emergency_services ? 'Emergency services available' : 'No emergency services'}</span></div>
+            <div className="mt-5"><div className="text-sm font-medium text-heading">Specialties available at this hospital</div><div className="mt-2 flex flex-wrap gap-2">{selectedHospital.specialists_available.map((specialty) => <span key={specialty} className="rounded-full border border-border bg-white px-3 py-1 text-xs text-muted">{specialty}</span>)}</div></div>
+          </div> : null}
 
           <div>
             <div className="text-sm font-medium uppercase tracking-[0.2em] text-primary">Choose doctor</div>
+            {recommendedSpecialist ? <p className="mt-2 text-sm text-muted">Recommended for your assessment: <span className="font-medium text-primary">{recommendedSpecialist}</span>. Matching doctors appear first.</p> : null}
             <div className="mt-2 flex items-center gap-2 rounded-2xl border border-border bg-slate-50 px-4 py-3">
               <MagnifyingGlassIcon className="h-4 w-4 text-muted" />
               <input
@@ -412,6 +341,7 @@ export default function AppointmentsPage() {
                       <UserGroupIcon className="h-3.5 w-3.5" />
                       {doctor.specialization}
                     </div>
+                    {doctor.is_recommended ? <div className="ml-2 inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">Recommended match</div> : null}
                     <div className="mt-3 text-lg font-medium text-heading">{doctor.name}</div>
                     <div className="mt-2 text-sm text-muted">{doctor.hospital_name}</div>
                   </div>
@@ -425,6 +355,11 @@ export default function AppointmentsPage() {
                       {day}
                     </span>
                   ))}
+                </div>
+                <div className="mt-4 space-y-1 text-xs leading-5 text-muted">
+                  <div><span className="font-medium text-heading">Qualification:</span> {doctor.qualification || doctor.qualifications}</div>
+                  <div><span className="font-medium text-heading">Experience:</span> {doctor.years_experience} years · <span className="font-medium text-heading">Rating:</span> {doctor.rating}</div>
+                  <div><span className="font-medium text-heading">Languages:</span> {doctor.languages_spoken.join(', ')}</div>
                 </div>
               </button>
             ))}
@@ -466,7 +401,7 @@ export default function AppointmentsPage() {
                   type="date"
                   value={formData.appointment_date}
                   min={getMinDate()}
-                  onChange={(event) => setFormData((current) => ({ ...current, appointment_date: event.target.value }))}
+                  onChange={(event) => setFormData((current) => ({ ...current, appointment_date: event.target.value, time_slot: '' }))}
                   className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-heading outline-none focus:border-primary"
                   required
                 />
@@ -478,7 +413,7 @@ export default function AppointmentsPage() {
                   onChange={(event) => setFormData((current) => ({ ...current, time_slot: event.target.value }))}
                   className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-heading outline-none focus:border-primary"
                   required
-                  disabled={!selectedDoctor}
+                  disabled={!isDoctorAvailable}
                 >
                   <option value="">Choose a slot</option>
                   {availableSlots.map((slot) => (
@@ -489,6 +424,12 @@ export default function AppointmentsPage() {
                 </select>
               </label>
             </div>
+
+            {selectedDoctor && selectedDay && !isDoctorAvailable ? (
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                {selectedDoctor.name} isn't available on this day — available days: {selectedDoctor.available_days.join(', ')}
+              </div>
+            ) : null}
 
             <div className="grid gap-3 sm:grid-cols-2">
               {[
@@ -537,7 +478,7 @@ export default function AppointmentsPage() {
 
             <button
               type="submit"
-              disabled={bookingLoading || !formData.hospital_name || !formData.doctor_name || !formData.appointment_date || !formData.time_slot}
+              disabled={bookingLoading || !formData.hospital_id || !formData.doctor_id || !isDoctorAvailable || !formData.time_slot}
               className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-white shadow-soft transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70"
             >
               {bookingLoading ? (
@@ -559,7 +500,7 @@ export default function AppointmentsPage() {
       {successBooking ? (
         <section className="grid gap-6 rounded-[32px] border border-emerald-200 bg-emerald-50 p-6 shadow-card lg:grid-cols-[0.95fr_1.05fr] lg:p-8">
           <div className="flex items-center justify-center rounded-[28px] bg-white p-4 shadow-card">
-            <img src={nurseIllustration} alt="Nurse illustration" className="max-h-[320px] w-full object-contain" />
+            <img src={bookingConfirmedIllustration} alt="Patient and doctor celebrating a confirmed appointment" className="max-h-[320px] w-full rounded-[20px] object-cover" />
           </div>
           <div className="flex flex-col justify-center">
             <div className="inline-flex w-fit items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-medium text-emerald-700 shadow-card">

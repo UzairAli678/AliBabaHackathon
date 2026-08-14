@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import re
+import logging
 
 from google import genai
 from google.genai import types
@@ -9,6 +10,7 @@ from fastapi import APIRouter
 from pydantic import BaseModel, Field
 
 router = APIRouter(prefix='/ai-chat', tags=['ai-chat'])
+logger = logging.getLogger(__name__)
 
 SYSTEM_INSTRUCTION = (
     "You are the CareLedger AI assistant, a friendly and knowledgeable guide inside the CareLedger AI healthcare app. "
@@ -36,6 +38,7 @@ class ConversationTurn(BaseModel):
 class ChatMessageRequest(BaseModel):
     message: str = Field(..., min_length=1)
     conversation_history: list[ConversationTurn] = Field(default_factory=list)
+    user_name: str | None = Field(default=None, max_length=80)
 
 
 class ChatMessageResponse(BaseModel):
@@ -92,14 +95,39 @@ def extract_reply_text(response: object) -> str:
     raise RuntimeError('Gemini returned an empty response.')
 
 
-def build_fallback_reply(emergency_detected: bool) -> str:
+def _safe_first_name(user_name: str | None) -> str:
+    if not user_name:
+        return ''
+    cleaned = re.sub(r"[^A-Za-zÀ-ÖØ-öø-ÿ' -]", '', user_name).strip()
+    return cleaned.split()[0] if cleaned else ''
+
+
+def _personalized_system_instruction(user_name: str | None) -> str:
+    first_name = _safe_first_name(user_name)
+    personalization = (
+        f"The user's first name is {first_name}. Address them by name naturally in greetings and occasionally when helpful, but do not repeat it in every paragraph. "
+        if first_name else ''
+    )
+    return (
+        SYSTEM_INSTRUCTION + ' ' + personalization
+        + "Answer like a concise, natural in-app assistant: for ordinary questions use 2 to 4 short sentences and usually stay under 100 words. "
+        + "Start with the direct answer, then give only the most useful next step. Do not produce exhaustive reports, long numbered lists, or repeated background details unless the user explicitly asks for an in-depth explanation. "
+        + "Use plain text without Markdown markers such as **, headings, or tables. Use at most 3 brief bullets only when a list is genuinely clearer. "
+        + "When relevant, briefly name the appropriate doctor specialty and one sensible next step. "
+        + "Introduce yourself as the CareLedger AI health guide when the user greets you or asks who you are, but do not reintroduce yourself in later replies."
+    )
+
+
+def build_fallback_reply(emergency_detected: bool, user_name: str | None = None) -> str:
+    first_name = _safe_first_name(user_name)
+    greeting = f'{first_name}, ' if first_name else ''
     prefix = (
         'Emergency warning: your symptoms may require urgent care. Please seek emergency care right away or use Emergency Mode in the app. '
         if emergency_detected
         else ''
     )
     return (
-        f"{prefix}I'm sorry, I can't answer that in full right now. "
+        f"{prefix}{greeting}I'm sorry, I can't answer that in full right now. "
         "Please try again shortly, or use Health Assessment or Disease Prediction for a more structured check in the meantime. "
         "If the symptoms feel serious, please consult a licensed doctor."
     )
@@ -111,7 +139,7 @@ def send_message(request: ChatMessageRequest) -> ChatMessageResponse:
     api_key = os.getenv('GEMINI_API_KEY', '').strip()
     if not api_key:
         return ChatMessageResponse(
-            reply=build_fallback_reply(emergency_detected),
+            reply=build_fallback_reply(emergency_detected, request.user_name),
             emergency_detected=emergency_detected,
         )
 
@@ -121,12 +149,19 @@ def send_message(request: ChatMessageRequest) -> ChatMessageResponse:
         response = client.models.generate_content(
             model=model_name,
             contents=build_contents(request),
-            config=types.GenerateContentConfig(system_instruction=SYSTEM_INSTRUCTION),
+            config=types.GenerateContentConfig(
+                system_instruction=_personalized_system_instruction(request.user_name),
+                max_output_tokens=600,
+                temperature=0.4,
+            ),
         )
         reply = extract_reply_text(response)
         return ChatMessageResponse(reply=reply, emergency_detected=emergency_detected)
-    except Exception as error:
+    except Exception:
+        # Keep credentials and provider details out of the response, while making
+        # integration failures visible in the backend console.
+        logger.exception('Gemini request failed')
         return ChatMessageResponse(
-            reply=build_fallback_reply(emergency_detected),
+            reply=build_fallback_reply(emergency_detected, request.user_name),
             emergency_detected=emergency_detected,
         )

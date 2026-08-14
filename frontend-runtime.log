@@ -1,0 +1,20 @@
+
+> careledger-ai-frontend@1.0.0 dev
+> vite --host 127.0.0.1 --port 5173 --strictPort
+
+
+  [32m[1mVITE[22m v5.4.21[39m  [2mready in [0m[1m662[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://127.0.0.1:[1m5173[22m/[39m
+[2m12:39:32 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/DiseasePrediction.jsx, /src/index.css[22m
+[2m12:39:32 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/DiseasePrediction.jsx, /src/index.css[22m
+[2m12:44:57 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/DiseasePrediction.jsx, /src/index.css[22m
+[2m12:49:34 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/DiseasePrediction.jsx, /src/index.css[22m
+[2m1:00:17 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/DiseasePrediction.jsx, /src/index.css[22m
+[2m1:00:19 PM[22m [36m[1m[vite][22m[39m [32m✨ new dependencies optimized: [33mzustand, zustand/middleware[32m[39m
+[2m1:00:19 PM[22m [36m[1m[vite][22m[39m [32m✨ optimized dependencies changed. reloading[39m
+[2m1:00:19 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/Assessment.jsx, /src/index.css[22m
+[2m1:02:20 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/Navigator.jsx, /src/index.css[22m
+[2m1:02:21 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/Navigator.jsx[22m
+[2m1:14:58 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/index.css, /src/pages/DiseasePrediction.jsx, /src/pages/Assessment.jsx, /src/pages/Navigator.jsx[22m
+[2m1:14:59 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/DiseasePrediction.jsx, /src/index.css[22m

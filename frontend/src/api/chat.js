@@ -1,6 +1,6 @@
 import { API_BASE_URL as backendBaseUrl } from '../lib/api';
 
-export async function sendChatMessage(message, conversationHistory) {
+export async function sendChatMessage(message, conversationHistory, userName = '') {
   const response = await fetch(`${backendBaseUrl}/ai-chat/message`, {
     method: 'POST',
     headers: {
@@ -9,7 +9,8 @@ export async function sendChatMessage(message, conversationHistory) {
     },
     body: JSON.stringify({
       message,
-      conversation_history: conversationHistory
+      conversation_history: conversationHistory,
+      user_name: userName || null
     })
   });
 

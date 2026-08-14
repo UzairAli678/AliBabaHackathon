@@ -7,6 +7,7 @@ from fastapi import APIRouter
 from google import genai
 from google.genai import types
 from pydantic import BaseModel, Field
+from services.hospital_data import load_hospitals
 
 router = APIRouter(prefix='/medical-cost-intelligence', tags=['medical-cost-intelligence'])
 
@@ -43,73 +44,22 @@ class AffordabilityAnalysisResult(BaseModel):
     ai_suggestions: list[str]
 
 
-_COST_PRESETS: dict[str, dict[str, tuple[float, float]]] = {
-    'consultation': {
-        'General Physician': (60, 120),
-        'Cardiologist': (120, 220),
-        'Dermatologist': (80, 180),
-        'Neurologist': (150, 280),
-        'Orthopedic Specialist': (130, 260),
-        'Gastroenterologist': (110, 210),
-        'Pulmonologist': (120, 230),
-        'Endocrinologist': (100, 200),
-        'Psychiatrist': (90, 180),
-        'Urologist': (120, 220),
-    },
-    'labs': {
-        'General Physician': (40, 180),
-        'Cardiologist': (80, 260),
-        'Dermatologist': (25, 120),
-        'Neurologist': (120, 350),
-        'Orthopedic Specialist': (90, 240),
-        'Gastroenterologist': (70, 220),
-        'Pulmonologist': (80, 250),
-        'Endocrinologist': (60, 180),
-        'Psychiatrist': (20, 100),
-        'Urologist': (60, 190),
-    },
-    'medication': {
-        'General Physician': (25, 80),
-        'Cardiologist': (50, 180),
-        'Dermatologist': (35, 140),
-        'Neurologist': (45, 160),
-        'Orthopedic Specialist': (40, 150),
-        'Gastroenterologist': (35, 130),
-        'Pulmonologist': (45, 160),
-        'Endocrinologist': (40, 140),
-        'Psychiatrist': (50, 180),
-        'Urologist': (35, 140),
-    },
-    'procedure': {
-        'General Physician': (100, 350),
-        'Cardiologist': (900, 3500),
-        'Dermatologist': (250, 1400),
-        'Neurologist': (800, 4000),
-        'Orthopedic Specialist': (700, 3200),
-        'Gastroenterologist': (600, 2800),
-        'Pulmonologist': (500, 2600),
-        'Endocrinologist': (300, 1200),
-        'Psychiatrist': (120, 500),
-        'Urologist': (500, 2400),
-    },
+_GENERAL_CONSULTATION_RANGES = {
+    'General Physician': (1500, 3000),
+    'default': (2500, 5000),
 }
 
-_HOSPITAL_TIER_MULTIPLIERS = {
-    'general': 0.92,
-    'community': 0.96,
-    'specialty': 1.08,
-    'academic': 1.18,
-    'premium': 1.28,
-    'default': 1.0,
-}
-
-_TREATMENT_SPECIALIST_HINTS = {
-    'surgery': 'procedure',
-    'scan': 'procedure',
-    'imaging': 'procedure',
-    'therapy': 'medication',
-    'follow-up': 'consultation',
-    'consultation': 'consultation',
+# Illustrative PKR ranges grounded in public Pakistani hospital package prices.
+# They are planning estimates, not live quotes or bills.
+_TREATMENT_COST_BANDS: dict[str, dict[str, tuple[float, float]]] = {
+    'consultation only': {'labs': (0, 0), 'medication': (0, 0), 'procedure': (0, 0)},
+    'consultation and labs': {'labs': (2500, 12000), 'medication': (0, 0), 'procedure': (0, 0)},
+    'consultation and medication': {'labs': (0, 0), 'medication': (2000, 12000), 'procedure': (0, 0)},
+    'minor procedure': {'labs': (1500, 8000), 'medication': (1500, 8000), 'procedure': (20000, 80000)},
+    'major procedure/surgery': {'labs': (8000, 35000), 'medication': (10000, 60000), 'procedure': (120000, 600000)},
+    'diagnostic imaging (x-ray/mri/ct)': {'labs': (0, 5000), 'medication': (0, 0), 'procedure': (5000, 45000)},
+    'physical therapy': {'labs': (0, 0), 'medication': (1000, 5000), 'procedure': (8000, 35000)},
+    'emergency treatment': {'labs': (5000, 25000), 'medication': (5000, 30000), 'procedure': (15000, 100000)},
 }
 
 
@@ -136,67 +86,73 @@ def _specialist_for_disease(predicted_disease: str) -> str:
     return 'General Physician'
 
 
-def _normalize_hospital_tier(selected_hospital: str | None) -> float:
-    if not selected_hospital:
-        return _HOSPITAL_TIER_MULTIPLIERS['default']
+def _find_hospital(selection: str | None) -> dict[str, Any] | None:
+    if not selection:
+        return None
+    normalized = selection.strip().lower()
+    return next(
+        (hospital for hospital in load_hospitals() if hospital['id'].lower() == normalized or hospital['name'].lower() == normalized),
+        None,
+    )
 
-    hospital = selected_hospital.lower()
-    if 'premium' in hospital or 'private' in hospital:
-        return _HOSPITAL_TIER_MULTIPLIERS['premium']
-    if 'academic' in hospital or 'teaching' in hospital:
-        return _HOSPITAL_TIER_MULTIPLIERS['academic']
-    if 'specialty' in hospital or 'center' in hospital:
-        return _HOSPITAL_TIER_MULTIPLIERS['specialty']
-    if 'community' in hospital or 'local' in hospital:
-        return _HOSPITAL_TIER_MULTIPLIERS['community']
-    if 'general' in hospital or 'public' in hospital:
-        return _HOSPITAL_TIER_MULTIPLIERS['general']
-    return _HOSPITAL_TIER_MULTIPLIERS['default']
+
+def _normalized_specialty(value: str) -> str:
+    aliases = {
+        'general physician': 'general medicine', 'internal medicine': 'general medicine',
+        'cardiologist': 'cardiology', 'neurologist': 'neurology', 'dermatologist': 'dermatology',
+        'pulmonologist': 'pulmonology', 'gastroenterologist': 'gastroenterology',
+        'orthopedic specialist': 'orthopedic surgery', 'orthopedics': 'orthopedic surgery',
+        'endocrinologist': 'endocrinology', 'urologist': 'urology', 'psychiatrist': 'psychiatry',
+    }
+    normalized = value.strip().lower()
+    return aliases.get(normalized, normalized)
+
+
+def _matched_doctor(hospital: dict[str, Any], specialist: str) -> dict[str, Any] | None:
+    target = _normalized_specialty(specialist)
+    matches = [
+        doctor for doctor in hospital.get('doctors', [])
+        if _normalized_specialty(doctor['specialization']) == target
+    ]
+    return sorted(matches, key=lambda doctor: (-doctor['rating'], -doctor['years_experience']))[0] if matches else None
+
+
+def _provider_cost_factor(hospital: dict[str, Any] | None) -> float:
+    if not hospital:
+        return 1.0
+    return max(0.65, min(float(hospital['consultation_fee']) / 2500, 1.45))
+
+
+def _scale_range(cost_range: tuple[float, float], factor: float) -> tuple[int, int]:
+    return tuple(int(round(value * factor / 100) * 100) for value in cost_range)
 
 
 def _estimate_range(predicted_disease: str, treatment_type: str, selected_hospital: str | None = None) -> dict[str, Any]:
     specialist = _specialist_for_disease(predicted_disease)
-    treatment_lower = treatment_type.lower()
-    cost_key = 'consultation'
-    for keyword, mapped_key in _TREATMENT_SPECIALIST_HINTS.items():
-        if keyword in treatment_lower:
-            cost_key = mapped_key
-            break
+    treatment_key = treatment_type.strip().lower()
+    cost_band = _TREATMENT_COST_BANDS.get(treatment_key, _TREATMENT_COST_BANDS['consultation only'])
+    hospital = _find_hospital(selected_hospital)
+    doctor = _matched_doctor(hospital, specialist) if hospital else None
+    factor = _provider_cost_factor(hospital)
 
-    consultation_range = _COST_PRESETS['consultation'].get(specialist, _COST_PRESETS['consultation']['General Physician'])
-    labs_range = _COST_PRESETS['labs'].get(specialist, _COST_PRESETS['labs']['General Physician'])
-    medication_range = _COST_PRESETS['medication'].get(specialist, _COST_PRESETS['medication']['General Physician'])
-    procedure_range = _COST_PRESETS['procedure'].get(specialist, _COST_PRESETS['procedure']['General Physician'])
+    if hospital:
+        fee = int(doctor['consultation_fee'] if doctor else hospital['consultation_fee'])
+        consultation = (fee, fee)
+    else:
+        consultation = _GENERAL_CONSULTATION_RANGES.get(specialist, _GENERAL_CONSULTATION_RANGES['default'])
 
-    if cost_key == 'consultation':
-        consultation_range = (consultation_range[0] * 1.0, consultation_range[1] * 1.0)
-        labs_range = (labs_range[0] * 0.6, labs_range[1] * 0.8)
-        medication_range = (medication_range[0] * 0.7, medication_range[1] * 0.9)
-        procedure_range = (0, 0)
-    elif cost_key == 'labs':
-        consultation_range = (consultation_range[0] * 1.0, consultation_range[1] * 1.1)
-        procedure_range = (0, 0)
-    elif cost_key == 'medication':
-        consultation_range = (consultation_range[0] * 1.0, consultation_range[1] * 1.0)
-        procedure_range = (0, 0)
-    elif cost_key == 'procedure':
-        consultation_range = (consultation_range[0] * 1.1, consultation_range[1] * 1.2)
-
-    tier_multiplier = _normalize_hospital_tier(selected_hospital)
-
-    consultation = (round(consultation_range[0] * tier_multiplier, 2), round(consultation_range[1] * tier_multiplier, 2))
-    labs = (round(labs_range[0] * tier_multiplier, 2), round(labs_range[1] * tier_multiplier, 2))
-    medication = (round(medication_range[0] * tier_multiplier, 2), round(medication_range[1] * tier_multiplier, 2))
-    procedure = (round(procedure_range[0] * tier_multiplier, 2), round(procedure_range[1] * tier_multiplier, 2))
-
-    total_min = round(consultation[0] + labs[0] + medication[0] + procedure[0], 2)
-    total_max = round(consultation[1] + labs[1] + medication[1] + procedure[1], 2)
+    labs = _scale_range(cost_band['labs'], factor)
+    medication = _scale_range(cost_band['medication'], factor)
+    procedure = _scale_range(cost_band['procedure'], factor)
+    total_min = sum(item[0] for item in (consultation, labs, medication, procedure))
+    total_max = sum(item[1] for item in (consultation, labs, medication, procedure))
 
     return {
         'predicted_disease': predicted_disease,
         'treatment_type': treatment_type,
-        'selected_hospital': selected_hospital,
+        'selected_hospital': hospital['name'] if hospital else None,
         'specialist': specialist,
+        'matched_doctor': doctor['name'] if doctor else None,
         'cost_breakdown': {
             'consultation': {'min': consultation[0], 'max': consultation[1]},
             'labs': {'min': labs[0], 'max': labs[1]},
@@ -212,12 +168,28 @@ class CostEstimateResponse(BaseModel):
     treatment_type: str
     selected_hospital: str | None = None
     specialist: str
+    matched_doctor: str | None = None
     cost_breakdown: dict[str, Any]
 
 
 @router.post('/estimate', response_model=CostEstimateResponse)
 def estimate_cost(payload: CostEstimateRequest) -> dict[str, Any]:
     return _estimate_range(payload.predicted_disease, payload.treatment_type, payload.selected_hospital)
+
+
+@router.get('/hospitals')
+def get_cost_hospitals() -> dict[str, list[dict[str, Any]]]:
+    return {
+        'hospitals': [
+            {
+                'id': hospital['id'],
+                'name': hospital['name'],
+                'city': hospital['city'],
+                'consultation_fee': hospital['consultation_fee'],
+            }
+            for hospital in load_hospitals()
+        ]
+    }
 
 
 def _build_fallback_suggestions(score: int, effective_out_of_pocket_cost: float, monthly_income: float, existing_savings: float) -> list[str]:

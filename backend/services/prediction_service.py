@@ -26,9 +26,6 @@ class PredictionService:
             enriched_symptoms.extend(other_text_fragments)
 
         emergency_result = self.emergency_service.detect(symptoms)
-        if emergency_result.emergency:
-            return self.formatter.format_emergency(emergency_result)
-
         ml_predictions = self.ml_service.predict(enriched_symptoms)
         aggregated_predictions = self.aggregator.aggregate(ml_predictions, enriched_symptoms, self.knowledge_base)
         serialized_predictions = self.aggregator.to_serializable(aggregated_predictions)
@@ -41,4 +38,8 @@ class PredictionService:
         response = self.formatter.format_prediction_response(symptoms, aggregated_predictions, follow_up_questions)
         response['confidence_threshold_met'] = bool(best_prediction and best_prediction['final_score'] >= 0.75)
         response['follow_up_answers'] = follow_up_answers
+        # Urgency is advisory metadata. It must never replace or short-circuit
+        # the model prediction, so callers can display both outcomes together.
+        response['emergency'] = emergency_result.emergency
+        response['urgent_warning'] = emergency_result.message if emergency_result.emergency else None
         return response

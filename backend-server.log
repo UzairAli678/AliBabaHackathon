@@ -1,0 +1,15 @@
+INFO:     127.0.0.1:65001 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65001 - "POST /ai-chat/message HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65016 - "GET /appointments/my-appointments HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65016 - "GET /appointments/my-appointments HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65016 - "OPTIONS /ai-chat/message HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65017 - "POST /ai-chat/message HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52808 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52820 - "OPTIONS /medical-cost-intelligence/affordability-analysis HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52820 - "POST /medical-cost-intelligence/affordability-analysis HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57881 - "GET /appointments/my-appointments HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57881 - "GET /appointments/my-appointments HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57882 - "OPTIONS /medical-cost-intelligence/affordability-analysis HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57882 - "POST /medical-cost-intelligence/affordability-analysis HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57938 - "GET /appointments/my-appointments HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57938 - "GET /appointments/my-appointments HTTP/1.1" 200 OK

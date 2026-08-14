@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { hasSupabaseConfig, supabase } from '../lib/supabase';
+import { getAuthRedirectUrl, hasSupabaseConfig, supabase } from '../lib/supabase';
 import AuthLayout from '../components/AuthLayout';
 import TextField from '../components/TextField';
 
@@ -26,8 +26,8 @@ export default function ForgotPasswordPage() {
     }
 
     setLoading(true);
-    const { error: requestError } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/signin`
+    const { error: requestError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: getAuthRedirectUrl('/reset-password')
     });
     setLoading(false);
 
@@ -36,7 +36,7 @@ export default function ForgotPasswordPage() {
       return;
     }
 
-    setMessage('Password reset link sent if the account exists.');
+    setMessage('Check your email for a reset link.');
   };
 
   return (

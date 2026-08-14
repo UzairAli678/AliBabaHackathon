@@ -4,6 +4,9 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+# Load repository-level configuration before importing routers or services.
+load_dotenv(Path(__file__).resolve().parents[1] / ".env")
+
 from routers.ai_chat import router as ai_chat_router
 from routers.appointments import router as appointments_router
 from routers.health_assessment import router as health_assessment_router
@@ -12,8 +15,6 @@ from routers.medical_cost_intelligence import router as medical_cost_intelligenc
 from routers.smart_care_navigator import router as smart_care_navigator_router
 
 app = FastAPI(title="CareLedger AI Backend")
-
-load_dotenv(Path(__file__).resolve().parents[1] / '.env')
 
 app.add_middleware(
     CORSMiddleware,

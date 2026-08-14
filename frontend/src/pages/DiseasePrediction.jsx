@@ -8,6 +8,7 @@ import {
   ArrowTopRightOnSquareIcon
 } from '@heroicons/react/24/outline';
 import { API_BASE_URL as backendBaseUrl } from '../lib/api';
+import useCareContext from '../store/useCareContext';
 
 function inferSpecialistForDisease(disease) {
   const lowerDisease = disease.toLowerCase();
@@ -105,14 +106,17 @@ function sortSymptoms(symptoms) {
 
 export default function DiseasePredictionPage() {
   const navigate = useNavigate();
+  const setLatestCareContext = useCareContext((state) => state.setLatestCareContext);
+  const savedPredictionSession = useCareContext((state) => state.diseasePredictionSession);
+  const setDiseasePredictionSession = useCareContext((state) => state.setDiseasePredictionSession);
   const [availableSymptoms, setAvailableSymptoms] = useState([]);
   const [loadingSymptoms, setLoadingSymptoms] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [searchText, setSearchText] = useState('');
-  const [selectedSymptoms, setSelectedSymptoms] = useState([]);
+  const [selectedSymptoms, setSelectedSymptoms] = useState(() => savedPredictionSession?.selectedSymptoms || []);
   const [predictionLoading, setPredictionLoading] = useState(false);
   const [predictionError, setPredictionError] = useState('');
-  const [result, setResult] = useState(null);
+  const [result, setResult] = useState(() => savedPredictionSession?.result || null);
   const [followUpAnswers, setFollowUpAnswers] = useState({});
 
   useEffect(() => {
@@ -159,6 +163,10 @@ export default function DiseasePredictionPage() {
     };
   }, []);
 
+  useEffect(() => {
+    setDiseasePredictionSession({ selectedSymptoms, result });
+  }, [selectedSymptoms, result, setDiseasePredictionSession]);
+
   const filteredSymptoms = useMemo(() => {
     const query = searchText.trim().toLowerCase();
     const remainingSymptoms = availableSymptoms.filter((symptom) => !selectedSymptoms.includes(symptom));
@@ -202,12 +210,16 @@ export default function DiseasePredictionPage() {
   };
 
   const handlePredict = async () => {
-    if (!canPredict) {
+    if (!canPredict || predictionLoading) {
       return;
     }
 
+    const symptomsForRequest = [...selectedSymptoms];
     setPredictionLoading(true);
     setPredictionError('');
+    // Remove the stale result while a new request is in flight. This also
+    // guarantees that any repeat-request error is shown on the checklist.
+    setResult(null);
 
     const serializedFollowUpAnswers = Object.fromEntries(
       Object.entries(followUpAnswers).map(([questionId, answer]) => [
@@ -224,13 +236,14 @@ export default function DiseasePredictionPage() {
           Accept: 'application/json'
         },
         body: JSON.stringify({
-          symptoms: selectedSymptoms,
+          symptoms: symptomsForRequest,
           follow_up_answers: serializedFollowUpAnswers
         })
       });
 
       if (!response.ok) {
-        throw new Error('Prediction request failed.');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData?.detail || `Prediction request failed (${response.status}).`);
       }
 
       const data = await response.json();
@@ -239,13 +252,29 @@ export default function DiseasePredictionPage() {
         confidence: Math.round(((prediction.final_score ?? prediction.probability ?? 0) || 0) * 100),
         specialist: prediction.recommended_specialist || prediction.specialist || inferSpecialistForDisease(prediction.disease)
       }));
+      if (!predictions.length) {
+        throw new Error('The backend returned no predictions. Please adjust the symptoms and try again.');
+      }
 
-      setResult({
-        selectedSymptoms: data.selected_symptoms || selectedSymptoms,
+      const nextResult = {
+        selectedSymptoms: data.selected_symptoms || symptomsForRequest,
         predictions,
         bestPrediction: data.best_prediction || predictions[0] || null,
         followUpQuestions: data.follow_up_questions || [],
-        confidenceThresholdMet: Boolean(data.confidence_threshold_met)
+        confidenceThresholdMet: Boolean(data.confidence_threshold_met),
+        urgent: Boolean(data.emergency),
+        urgentWarning: data.urgent_warning || data.message || ''
+      };
+      setResult(nextResult);
+      const primaryPrediction = predictions[0];
+      const specialist = primaryPrediction.specialist || inferSpecialistForDisease(primaryPrediction.disease);
+      setLatestCareContext({
+        disease: primaryPrediction.disease,
+        specialist,
+        riskLevel: data.emergency ? 'urgent' : primaryPrediction.confidence >= 75 ? 'high' : primaryPrediction.confidence >= 50 ? 'medium' : 'low',
+        confidence: primaryPrediction.confidence,
+        symptoms: nextResult.selectedSymptoms,
+        source: 'Disease Prediction'
       });
       setFollowUpAnswers({});
     } catch (error) {
@@ -261,6 +290,15 @@ export default function DiseasePredictionPage() {
     }
 
     const specialist = topPrediction.specialist || inferSpecialistForDisease(topPrediction.disease);
+    const careContext = {
+      disease: topPrediction.disease,
+      specialist,
+      riskLevel: topPrediction.confidence >= 75 ? 'high' : topPrediction.confidence >= 50 ? 'medium' : 'low',
+      confidence: topPrediction.confidence,
+      symptoms: result?.selectedSymptoms || selectedSymptoms,
+      source: 'Disease Prediction'
+    };
+    setLatestCareContext(careContext);
 
     navigate('/navigator', {
       state: {
@@ -273,13 +311,16 @@ export default function DiseasePredictionPage() {
           symptoms: result?.selectedSymptoms || selectedSymptoms,
           topDisease: topPrediction.disease,
           suggestedSpecialist: specialist
-        }
+        }, careContext
       }
     });
   };
 
   const handleAddMoreSymptoms = () => {
     setResult(null);
+    setPredictionLoading(false);
+    setPredictionError('');
+    setFollowUpAnswers({});
   };
 
   const handleFollowUpAnswerChange = (questionId, value) => {
@@ -306,6 +347,26 @@ export default function DiseasePredictionPage() {
 
     return (
       <div className="space-y-6">
+        {result.urgent ? (
+          <section className="rounded-[24px] border border-red-200 bg-rose-50 px-5 py-5 shadow-card">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <div className="text-sm font-medium uppercase tracking-[0.2em] text-critical">Potentially urgent symptoms</div>
+                <p className="mt-2 text-sm leading-7 text-red-800">
+                  These symptoms may indicate a serious condition — consider seeking immediate medical attention.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => navigate('/emergency')}
+                className="inline-flex shrink-0 items-center justify-center rounded-full bg-critical px-5 py-3 text-sm font-medium text-white shadow-soft transition hover:opacity-90"
+              >
+                Open Emergency Mode
+              </button>
+            </div>
+          </section>
+        ) : null}
+
         {showLowConfidenceBanner ? (
           <section className="rounded-[24px] border border-amber-200 bg-amber-50 px-4 py-4 shadow-card sm:px-5">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -426,9 +487,18 @@ export default function DiseasePredictionPage() {
                   <p className="mt-1 text-muted">{topPrediction.specialist}</p>
                 </div>
                 {!result.confidenceThresholdMet ? (
-                  <p className="mt-4 text-sm leading-7 text-muted">
-                    This result is preliminary. Add more symptoms or answer the follow-up questions above for a clearer prediction.
-                  </p>
+                  <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm leading-7 text-amber-900">
+                    <div className="font-medium">Why confidence is not higher</div>
+                    <p className="mt-1">
+                      Some selected symptoms also occur in the other possibilities shown below. Only add more symptoms if you are actually experiencing them.
+                    </p>
+                    {topPrediction.missing_symptoms?.length ? (
+                      <div className="mt-3">
+                        <span className="font-medium">Relevant symptoms not selected: </span>
+                        {topPrediction.missing_symptoms.map((symptom) => symptom.replaceAll('_', ' ')).join(', ')}.
+                      </div>
+                    ) : null}
+                  </div>
                 ) : null}
               </div>
             </div>
@@ -447,32 +517,35 @@ export default function DiseasePredictionPage() {
                 onClick={handleFindSpecialists}
                 className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-medium text-white shadow-soft transition hover:opacity-90"
               >
-                Find specialists near me
+                Open Care Navigator
                 <ArrowTopRightOnSquareIcon className="h-4 w-4" />
               </button>
             </div>
           </div>
         </section>
 
-        <section className="grid gap-6 lg:grid-cols-2">
+        <section className="rounded-[28px] border border-border bg-slate-50 p-5 sm:p-6">
+          <div className="text-xs font-medium uppercase tracking-[0.2em] text-muted">Other possibilities to be aware of</div>
+          <p className="mt-2 text-sm text-muted">Lower-probability context, not equal alternatives to the primary result above.</p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
           {alternatePredictions.map((prediction) => (
-            <article key={prediction.disease} className="rounded-[28px] border border-border bg-white p-6 shadow-card sm:p-7">
+            <article key={prediction.disease} className="rounded-[20px] border border-border bg-white p-4">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <div className="text-sm font-medium uppercase tracking-[0.2em] text-primary">Alternative</div>
-                  <h3 className="mt-2 text-2xl font-medium tracking-tight text-heading">{prediction.disease}</h3>
+                  <h3 className="text-base font-medium text-heading">{prediction.disease}</h3>
                 </div>
                 <div className="rounded-full bg-slate-50 px-4 py-2 text-sm font-medium text-heading">{prediction.confidence}%</div>
               </div>
               <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-100">
                 <div className="h-full rounded-full bg-slate-500" style={{ width: `${prediction.confidence}%` }} />
               </div>
-              <div className="mt-4 rounded-2xl bg-slate-50 p-4 text-sm leading-7 text-muted">
+              <div className="mt-3 text-xs leading-6 text-muted">
                 <div className="font-medium text-heading">Recommended specialist</div>
                 <p className="mt-1 text-muted">{prediction.specialist}</p>
               </div>
             </article>
           ))}
+          </div>
         </section>
 
         <section className="rounded-[28px] border border-border bg-slate-50 p-6 shadow-card">

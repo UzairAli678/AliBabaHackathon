@@ -126,7 +126,7 @@
     "emergency": false
   },
   "Heart attack": {
-    "symptoms": ["chest_pain", "breathlessness", "fast_heart_rate", "sweating"],
+    "symptoms": ["chest_pain", "breathlessness", "sweating", "vomiting"],
     "specialist": "Cardiologist",
     "severity": "Emergency",
     "description": "A medical emergency caused by blocked blood flow to the heart muscle.",

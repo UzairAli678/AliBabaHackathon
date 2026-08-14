@@ -1,266 +1,166 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { ArrowTopRightOnSquareIcon, CalendarDaysIcon, MapPinIcon, StarIcon } from '@heroicons/react/24/outline';
-import TextField from '../components/TextField';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { CalendarDaysIcon, MapPinIcon, StarIcon } from '@heroicons/react/24/outline';
 import { API_BASE_URL } from '../lib/api';
+import useCareContext from '../store/useCareContext';
 
-const symptomPresets = [
-  'fever',
-  'throat pain',
-  'ear pain',
-  'sinus pressure',
-  'stomach pain',
-  'nausea',
-  'rash',
-  'breathing trouble',
-  'dizziness',
-  'chest pain',
-  'joint pain'
-];
-
-function inferUrgency(sourceText) {
-  const lowerText = sourceText.toLowerCase();
-
-  if (lowerText.includes('breathing') || lowerText.includes('chest pain') || lowerText.includes('faint') || lowerText.includes('confused')) {
-    return 'immediate';
-  }
-
-  if (lowerText.includes('high fever') || lowerText.includes('unable to keep fluids down') || lowerText.includes('severe')) {
-    return 'immediate';
-  }
-
-  if (lowerText.includes('fever') || lowerText.includes('pain') || lowerText.includes('dizziness') || lowerText.includes('rash')) {
-    return 'needs attention';
-  }
-
-  return 'mild';
-}
-
-function inferSpecialist(sourceText) {
-  const lowerText = sourceText.toLowerCase();
-
-  if (lowerText.includes('ear') || lowerText.includes('throat') || lowerText.includes('sinus') || lowerText.includes('voice')) {
-    return 'ENT Specialist';
-  }
-
-  if (lowerText.includes('stomach') || lowerText.includes('nausea') || lowerText.includes('vomiting') || lowerText.includes('diarrhea')) {
-    return 'General Physician';
-  }
-
-  if (lowerText.includes('rash') || lowerText.includes('itch') || lowerText.includes('skin')) {
-    return 'Dermatologist';
-  }
-
-  if (lowerText.includes('joint') || lowerText.includes('back') || lowerText.includes('muscle')) {
-    return 'Orthopedic Specialist';
-  }
-
-  if (lowerText.includes('breathing') || lowerText.includes('chest') || lowerText.includes('cough')) {
-    return 'General Physician';
-  }
-
-  return 'General Physician';
-}
-
-function buildGuidance(urgency) {
-  if (urgency === 'immediate') {
-    return 'Get in front of a clinician as soon as possible. If symptoms are severe or worsening, seek emergency care first.';
-  }
-
-  if (urgency === 'needs attention') {
-    return 'Book a visit soon and keep monitoring your symptoms. If anything gets worse, move to emergency care.';
-  }
-
-  return 'This looks suitable for routine care. Monitor at home, stay hydrated, and book follow-up if symptoms linger.';
-}
+const formatPKR = (value) => new Intl.NumberFormat('en-PK', {
+  style: 'currency',
+  currency: 'PKR',
+  maximumFractionDigits: 0
+}).format(value || 0);
 
 export default function NavigatorPage() {
   const location = useLocation();
-  const assessment = location.state?.assessment || null;
-  const passedSpecialist = location.state?.specialist || null;
-  const [symptomText, setSymptomText] = useState(assessment?.symptoms?.join(', ') || '');
-  const [selectedPreset, setSelectedPreset] = useState('');
-  const [hospitals, setHospitals] = useState([]);
-  const [doctors, setDoctors] = useState([]);
+  const navigate = useNavigate();
+  const storedContext = useCareContext((state) => state.latestCareContext);
+  const rememberSelectedHospital = useCareContext((state) => state.setSelectedHospital);
+  const routeAssessment = location.state?.assessment;
+  const careContext = location.state?.careContext || storedContext || (routeAssessment ? {
+    disease: routeAssessment.topDisease,
+    specialist: location.state?.specialist || routeAssessment.suggestedSpecialist || 'General Physician',
+    riskLevel: routeAssessment.riskLevel,
+    confidence: routeAssessment.score,
+    source: 'Recent assessment'
+  } : null);
+  const [data, setData] = useState(null);
+  const [error, setError] = useState('');
+  const [selectedHospitalId, setSelectedHospitalId] = useState('');
 
   useEffect(() => {
-    fetch(`${API_BASE_URL}/smart-care-navigator`)
-      .then((response) => response.json())
-      .then((data) => {
-        setHospitals(Array.isArray(data.nearby_hospitals) ? data.nearby_hospitals : []);
-        setDoctors(Array.isArray(data.doctors) ? data.doctors : []);
+    if (careContext && ['high', 'critical', 'urgent'].includes(String(careContext.riskLevel).toLowerCase())) {
+      navigate('/emergency', { replace: true });
+      return;
+    }
+    if (!careContext) return;
+    fetch(`${API_BASE_URL}/smart-care-navigator/personalized`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        disease: careContext.disease,
+        specialist: careContext.specialist,
+        risk_level: careContext.riskLevel
       })
-      .catch(() => {
-        setHospitals([]);
-        setDoctors([]);
+    }).then(async (response) => {
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.detail || 'Unable to load recommendations.');
+      setData(payload);
+      setSelectedHospitalId(payload.featured_hospital?.id || '');
+    }).catch((requestError) => setError(requestError.message));
+  }, [careContext?.disease, careContext?.specialist, careContext?.riskLevel, navigate]);
+
+  const topRecommendations = useMemo(() => {
+    if (!data) return [];
+    const recommendations = data.nearby_hospitals.slice(0, 3).map((hospital) => ({
+      hospital,
+      doctor: data.doctors.find((doctor) => doctor.hospital_id === hospital.id)
+    })).filter((item) => item.doctor);
+
+    if (!recommendations.length) return [];
+    const badges = new Map([[recommendations[0].hospital.id, 'Best Match']]);
+    const remaining = recommendations.slice(1);
+    if (remaining.length) {
+      const affordable = [...remaining].sort((a, b) => a.doctor.consultation_fee - b.doctor.consultation_fee)[0];
+      badges.set(affordable.hospital.id, 'Most Affordable');
+      remaining.filter((item) => item.hospital.id !== affordable.hospital.id).forEach((item) => {
+        badges.set(item.hospital.id, 'Nearest');
       });
-  }, []);
+    }
+    return recommendations.map((item) => ({ ...item, badge: badges.get(item.hospital.id) }));
+  }, [data]);
 
-  const sourceText = useMemo(() => {
-    const parts = [selectedPreset, symptomText].filter(Boolean);
-    return parts.join(' ').trim();
-  }, [assessment?.symptoms, selectedPreset, symptomText]);
+  const selectedHospital = useMemo(
+    () => data?.nearby_hospitals?.find((item) => item.id === selectedHospitalId),
+    [data, selectedHospitalId]
+  );
+  const selectedDoctors = useMemo(
+    () => data?.doctors?.filter((doctor) => doctor.hospital_id === selectedHospitalId) || [],
+    [data, selectedHospitalId]
+  );
 
-  const urgency = assessment?.urgency || inferUrgency(sourceText);
-  const specialist = passedSpecialist || assessment?.suggestedSpecialist || inferSpecialist(sourceText);
-  const guidance = buildGuidance(urgency);
-  const bookableDoctor = doctors.find((option) => option.specialization === specialist) || doctors[0] || null;
-
-  const summaryText = assessment
-    ? `Based on your assessment, your risk level is ${assessment.riskLevel} and the current urgency is ${assessment.urgency}.`
-    : 'Enter symptoms directly to get a suggested care path and nearby options.';
-
-  const searchContext = sourceText || 'general symptoms';
+  if (!careContext) {
+    return (
+      <section className="rounded-[28px] border border-border bg-white p-8 shadow-card">
+        <h2 className="text-3xl font-medium text-heading">Complete an assessment first</h2>
+        <p className="mt-3 text-muted">Disease Prediction or Health Assessment will create your personalized care recommendation.</p>
+        <Link to="/disease-prediction" className="mt-5 inline-flex rounded-full bg-primary px-5 py-3 text-sm font-medium text-white">Open Disease Prediction</Link>
+      </section>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      <section className="rounded-[28px] border border-border bg-white p-6 shadow-card sm:p-8">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-2xl">
-            <div className="text-sm font-medium uppercase tracking-[0.2em] text-primary">Smart Care Navigator</div>
-            <h2 className="mt-2 text-3xl font-medium tracking-tight text-heading sm:text-4xl">Find the right care path</h2>
-            <p className="mt-3 text-sm leading-7 text-muted">{summaryText}</p>
-          </div>
-          {assessment ? (
-            <div className="rounded-3xl bg-slate-50 px-5 py-4 text-sm leading-7 text-heading">
-              <div className="font-medium text-heading">Assessment summary</div>
-              <p className="mt-1 text-muted">Score {assessment.score} with {assessment.riskLevel} risk.</p>
-            </div>
-          ) : null}
+      <section className="rounded-[28px] border border-primary/20 bg-white p-6 shadow-card sm:p-8">
+        <div className="text-sm font-medium uppercase tracking-[0.2em] text-primary">Based on your recent assessment</div>
+        <h2 className="mt-3 text-3xl font-medium text-heading">{careContext.disease} — Recommended: {careContext.specialist}</h2>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <span className="rounded-full bg-teal-50 px-3 py-1 text-sm text-primary">Risk: {careContext.riskLevel}</span>
+          {careContext.confidence != null ? <span className="rounded-full bg-slate-100 px-3 py-1 text-sm text-heading">Confidence: {careContext.confidence}%</span> : null}
         </div>
       </section>
 
-      <section className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
-        <div className="space-y-6">
-          <div className="rounded-[28px] border border-border bg-white p-6 shadow-card sm:p-8">
-            <div className="text-sm font-medium uppercase tracking-[0.2em] text-primary">Symptoms</div>
-            <h3 className="mt-2 text-2xl font-medium tracking-tight text-heading">Enter or select symptoms</h3>
-            <p className="mt-2 text-sm leading-7 text-muted">
-              Use one or more words. You can also start from the assessment result and refine the details here.
-            </p>
-
-            <div className="mt-5">
-              <TextField
-                label="Symptoms"
-                placeholder="e.g. sore throat, fever, cough"
-                value={symptomText}
-                onChange={(event) => setSymptomText(event.target.value)}
-              />
+      {error ? <div className="rounded-2xl border border-red-200 bg-rose-50 p-4 text-sm text-red-700">{error}</div> : null}
+      {!data ? <div className="rounded-[28px] bg-white p-8 text-muted shadow-card">Preparing your personalized recommendation...</div> : (
+        <>
+          <section>
+            <div className="mb-4">
+              <h3 className="text-2xl font-medium tracking-tight text-heading">Top care recommendations</h3>
+              <p className="mt-2 text-sm text-muted">Compare the strongest hospital and specialist matches for your assessment.</p>
             </div>
-
-            <div className="mt-5 flex flex-wrap gap-2">
-              {symptomPresets.map((preset) => {
-                const isActive = selectedPreset === preset;
-                return (
-                  <button
-                    key={preset}
-                    type="button"
-                    onClick={() => setSelectedPreset((current) => (current === preset ? '' : preset))}
-                    className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
-                      isActive ? 'border-primary bg-primary text-white' : 'border-border bg-white text-muted hover:border-primary hover:text-heading'
-                    }`}
+            <div className="grid gap-5 lg:grid-cols-3">
+              {topRecommendations.map(({ hospital, doctor, badge }) => (
+                <article key={hospital.id} className="flex h-full flex-col rounded-[28px] border border-teal-200 bg-gradient-to-br from-teal-50 to-white p-6 shadow-soft">
+                  <div className="inline-flex w-fit rounded-full bg-primary px-3 py-1 text-xs font-medium text-white">{badge}</div>
+                  <h4 className="mt-4 text-2xl font-medium tracking-tight text-heading">{hospital.name}</h4>
+                  <p className="mt-2 flex items-start gap-2 text-sm leading-6 text-muted"><MapPinIcon className="mt-1 h-4 w-4 shrink-0" />{hospital.area}, {hospital.city}</p>
+                  <div className="mt-3 flex flex-wrap gap-3 text-sm">
+                    <span className="inline-flex items-center gap-1 text-amber-700"><StarIcon className="h-4 w-4" />{hospital.rating}</span>
+                    <span className="text-muted">{hospital.distance_km} km away</span>
+                  </div>
+                  <div className="mt-5 flex-1 rounded-[22px] bg-white p-5 shadow-card">
+                    <div className="text-lg font-medium text-heading">{doctor.name}</div>
+                    <div className="mt-1 text-sm font-medium text-primary">{doctor.specialization}</div>
+                    <div className="mt-3 text-sm font-medium text-heading">{formatPKR(doctor.consultation_fee)}</div>
+                  </div>
+                  <Link
+                    to="/appointments"
+                    state={{ appointmentSelection: { hospital_id: hospital.id, doctor_id: doctor.id, recommended_specialist: careContext.specialist } }}
+                    onClick={() => rememberSelectedHospital({ id: hospital.id, name: hospital.name })}
+                    className="mt-5 inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-medium text-white"
                   >
-                    {preset}
-                  </button>
-                );
-              })}
+                    <CalendarDaysIcon className="h-4 w-4" />
+                    Book Appointment
+                  </Link>
+                </article>
+              ))}
             </div>
-          </div>
+          </section>
 
-          <div className="grid gap-5 md:grid-cols-2">
-            {hospitals.slice(0, 4).map((option) => (
-              <article key={option.name} className="rounded-[24px] border border-border bg-white p-5 shadow-card">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <h4 className="text-lg font-medium tracking-tight text-heading">{option.name}</h4>
-                    <div className="mt-1 flex items-center gap-2 text-sm text-muted">
-                      <MapPinIcon className="h-4 w-4" />
-                      {option.area}, {option.city} · {option.distance_km} km
-                    </div>
-                  </div>
-                  <div className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-3 py-1 text-sm font-medium text-caution">
-                    <StarIcon className="h-4 w-4" />
-                    {option.rating}
-                  </div>
-                </div>
-                <div className="mt-4 grid grid-cols-2 gap-3 text-sm text-muted">
-                  <div className="rounded-2xl bg-slate-50 p-3">
-                    <div className="text-xs uppercase tracking-[0.2em] text-muted">Consultation fee</div>
-                    <div className="mt-1 font-medium text-heading">Rs. {option.consultation_fee}</div>
-                  </div>
-                  <div className="rounded-2xl bg-slate-50 p-3">
-                    <div className="text-xs uppercase tracking-[0.2em] text-muted">Care type</div>
-                    <div className="mt-1 font-medium text-heading">{specialist}</div>
-                  </div>
-                </div>
-                <a
-                  href="/"
-                  onClick={(event) => event.preventDefault()}
-                  className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
-                >
-                  View location details
-                  <ArrowTopRightOnSquareIcon className="h-4 w-4" />
-                </a>
-              </article>
-            ))}
-          </div>
+          <section className="grid gap-6 lg:grid-cols-3">
+            <article className="rounded-[28px] border border-border bg-white p-6 shadow-card"><h3 className="text-xl font-medium text-heading">What to expect</h3><ul className="mt-4 space-y-3 text-sm leading-7 text-muted">{data.what_to_expect.map((item) => <li key={item} className="rounded-2xl bg-slate-50 p-3">{item}</li>)}</ul></article>
+            <article className="rounded-[28px] border border-border bg-white p-6 shadow-card"><h3 className="text-xl font-medium text-heading">Estimated cost preview</h3><p className="mt-5 text-2xl font-medium text-heading">{formatPKR(data.cost_preview.min)} – {formatPKR(data.cost_preview.max)}</p><p className="mt-2 text-sm text-muted">Rough consultation and labs estimate.</p><Link to="/cost" className="mt-5 inline-flex text-sm font-medium text-primary hover:underline">See full cost breakdown</Link></article>
+            <article className="rounded-[28px] border border-border bg-white p-6 shadow-card"><h3 className="text-xl font-medium text-heading">Questions to ask your doctor</h3><ul className="mt-4 space-y-3 text-sm leading-6 text-muted">{data.questions_to_ask.map((item) => <li key={item} className="flex gap-2"><span className="text-primary">•</span>{item}</li>)}</ul></article>
+          </section>
 
-          <div className="rounded-[24px] border border-border bg-white p-5 shadow-card">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <div className="text-sm font-medium uppercase tracking-[0.2em] text-primary">Book appointment</div>
-                <h4 className="mt-2 text-xl font-medium tracking-tight text-heading">Use the current care recommendation</h4>
-                <p className="mt-2 text-sm leading-7 text-muted">
-                  We will pass the selected hospital and doctor into the booking flow so the appointment page can auto-fill the summary.
-                </p>
-              </div>
-              {bookableDoctor ? (
-                <Link
-                  to="/appointments"
-                  state={{
-                    appointmentSelection: {
-                      hospital_name: bookableDoctor.hospital_name,
-                      doctor_name: bookableDoctor.name,
-                      specialization: bookableDoctor.specialization,
-                      consultation_fee: bookableDoctor.consultation_fee,
-                    }
-                  }}
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-medium text-white shadow-soft transition hover:opacity-90"
-                >
-                  <CalendarDaysIcon className="h-4 w-4" />
-                  Book Appointment
-                </Link>
-              ) : null}
-            </div>
-            {bookableDoctor ? (
-              <div className="mt-4 rounded-2xl border border-teal-200 bg-teal-50 px-4 py-3 text-sm text-primary">
-                {bookableDoctor.name} at {bookableDoctor.hospital_name} · {bookableDoctor.specialization} · Rs. {bookableDoctor.consultation_fee}
+          <section className="rounded-[28px] border border-border bg-white p-6 shadow-card sm:p-8">
+            <h3 className="text-2xl font-medium text-heading">Browse alternative hospitals</h3>
+            <select value={selectedHospitalId} onChange={(event) => {
+              const hospitalId = event.target.value;
+              const hospital = data.nearby_hospitals.find((item) => item.id === hospitalId);
+              setSelectedHospitalId(hospitalId);
+              if (hospital) rememberSelectedHospital({ id: hospital.id, name: hospital.name });
+            }} className="mt-4 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-primary">
+              {data.nearby_hospitals.map((hospital) => <option key={hospital.id} value={hospital.id}>{hospital.name} — {hospital.city}</option>)}
+            </select>
+            {selectedHospital ? (
+              <div className="mt-5 rounded-[24px] bg-slate-50 p-5">
+                <div className="flex justify-between gap-3"><div><h4 className="text-xl font-medium text-heading">{selectedHospital.name}</h4><p className="mt-1 text-sm text-muted">{selectedHospital.area}, {selectedHospital.city}</p></div><span className="text-amber-700">★ {selectedHospital.rating}</span></div>
+                <div className="mt-4 grid gap-3 md:grid-cols-2">{selectedDoctors.map((doctor) => <div key={doctor.id} className="rounded-2xl bg-white p-4 shadow-card"><div className="font-medium text-heading">{doctor.name}</div><div className="mt-1 text-sm text-primary">{doctor.specialization}</div><div className="mt-2 text-sm text-muted">{doctor.qualification} · {doctor.years_experience} years</div><Link to="/appointments" state={{ appointmentSelection: { hospital_id: selectedHospital.id, doctor_id: doctor.id, recommended_specialist: careContext.specialist } }} className="mt-3 inline-flex text-sm font-medium text-primary hover:underline">Book this doctor</Link></div>)}</div>
               </div>
             ) : null}
-          </div>
-        </div>
-
-        <aside className="space-y-6">
-          <section className="rounded-[28px] border border-border bg-white p-6 shadow-card sm:p-8">
-            <div className="text-sm font-medium uppercase tracking-[0.2em] text-primary">Recommended care</div>
-            <h3 className="mt-2 text-2xl font-medium tracking-tight text-heading">{specialist}</h3>
-            <div className="mt-4 inline-flex rounded-full border border-border bg-slate-50 px-4 py-2 text-sm font-medium text-heading">
-              Urgency: {urgency}
-            </div>
-            <p className="mt-4 text-sm leading-7 text-muted">{guidance}</p>
           </section>
-
-          <section className="rounded-[28px] border border-border bg-slate-50 p-6 shadow-card">
-            <div className="text-sm font-medium uppercase tracking-[0.2em] text-primary">What to do next</div>
-            <p className="mt-3 text-sm leading-7 text-heading">
-              Search context: <span className="font-medium">{searchContext}</span>
-            </p>
-            <p className="mt-3 text-sm leading-7 text-muted">
-              Use the suggested care type to compare nearby options, or move to Emergency Mode if the symptoms are immediate.
-            </p>
-          </section>
-        </aside>
-      </section>
+        </>
+      )}
     </div>
   );
 }

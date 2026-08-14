@@ -7,6 +7,19 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [profileImage, setProfileImageState] = useState('');
+
+  useEffect(() => {
+    if (!user?.id) {
+      setProfileImageState('');
+      return;
+    }
+    try {
+      setProfileImageState(window.localStorage.getItem(`careledger-profile-image-${user.id}`) || '');
+    } catch {
+      setProfileImageState('');
+    }
+  }, [user?.id]);
 
   useEffect(() => {
     if (!hasSupabaseConfig || !supabase) {
@@ -43,9 +56,23 @@ export function AuthProvider({ children }) {
       user,
       session,
       loading,
+      profileImage,
+      updateProfile: async (metadata) => {
+        if (!supabase) return { error: new Error('Supabase is not configured.') };
+        const result = await supabase.auth.updateUser({ data: metadata });
+        if (result.data?.user) setUser(result.data.user);
+        return result;
+      },
+      saveProfileImage: (imageData) => {
+        if (!user?.id) return;
+        const key = `careledger-profile-image-${user.id}`;
+        if (imageData) window.localStorage.setItem(key, imageData);
+        else window.localStorage.removeItem(key);
+        setProfileImageState(imageData || '');
+      },
       signOut: () => (supabase ? supabase.auth.signOut() : Promise.resolve())
     }),
-    [user, session, loading]
+    [user, session, loading, profileImage]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

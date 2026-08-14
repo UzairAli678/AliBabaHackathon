@@ -3,13 +3,18 @@ import { Link } from 'react-router-dom';
 import { PaperAirplaneIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import ChatBubble from '../components/ChatBubble';
 import { sendChatMessage } from '../api/chat';
+import aiChatHeader from '../assets/illustrations/ai-chat-header.png';
+import { useAuth } from '../context/AuthContext';
 
-const welcomeMessage = {
-  id: 'welcome',
-  role: 'assistant',
-  content: "Hi, I'm your CareLedger AI assistant. Ask me about symptoms, medications, or anything health-related — I'm here to help.",
-  timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-};
+function createWelcomeMessage(name) {
+  const greeting = name ? `Hello ${name}` : 'Hello';
+  return {
+    id: 'welcome',
+    role: 'assistant',
+    content: `${greeting}! I’m the CareLedger AI health guide. I can help you understand symptoms, medications, suitable doctor specialties, nearby hospitals, and the next steps in your care journey. How may I guide you today?`,
+    timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  };
+}
 
 function TypingIndicator() {
   return (
@@ -78,7 +83,9 @@ function MessageComposer({ value, onChange, onSubmit, disabled, loading }) {
 }
 
 export default function ChatPage() {
-  const [messages, setMessages] = useState([welcomeMessage]);
+  const { user } = useAuth();
+  const firstName = (user?.user_metadata?.full_name || user?.email?.split('@')[0] || '').trim().split(/\s+/)[0];
+  const [messages, setMessages] = useState(() => [createWelcomeMessage(firstName)]);
   const [draft, setDraft] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -114,7 +121,7 @@ export default function ChatPage() {
     setMessages((currentMessages) => [...currentMessages, userMessage]);
 
     try {
-      const response = await sendChatMessage(trimmedMessage, conversationHistory);
+      const response = await sendChatMessage(trimmedMessage, conversationHistory, firstName);
       const assistantMessage = {
         id: `assistant-${Date.now()}`,
         role: 'assistant',
@@ -133,23 +140,13 @@ export default function ChatPage() {
 
   return (
     <section className="space-y-6">
-      <div className="rounded-[28px] border border-border bg-white p-6 shadow-card sm:p-8">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-2xl">
-            <div className="inline-flex items-center gap-2 rounded-full bg-tealSoft px-4 py-2 text-sm font-medium text-primary">
-              CareLedger AI
-            </div>
-            <h2 className="mt-5 text-3xl font-medium tracking-tight text-heading sm:text-4xl">Chat with a calm health guidance assistant</h2>
-            <p className="mt-3 text-sm leading-7 text-muted">
-              Ask about symptoms, medications, or care questions. For anything serious, the assistant will steer you toward Emergency Mode or structured care tools.
-            </p>
-          </div>
-          <div className="rounded-3xl bg-slate-50 px-5 py-4 text-sm leading-7 text-heading">
-            <div className="font-medium text-heading">Live support</div>
-            <p className="mt-1 text-muted">Context is carried across each turn in the conversation.</p>
-          </div>
-        </div>
-      </div>
+      <header className="overflow-hidden rounded-[28px] border border-border bg-white shadow-card">
+        <img
+          src={aiChatHeader}
+          alt="CareLedger AI health companion with doctor and mobile healthcare app"
+          className="aspect-[5/2] w-full object-cover object-center sm:aspect-auto"
+        />
+      </header>
 
       <div className="flex min-h-[calc(100vh-230px)] flex-col rounded-[32px] border border-border bg-background shadow-card">
         <div ref={scrollAreaRef} className="flex-1 space-y-4 overflow-y-auto px-4 py-6 sm:px-6">
@@ -169,7 +166,7 @@ export default function ChatPage() {
         <div className="border-t border-border bg-slate-50/80 px-4 py-4 sm:px-6">
           {emergencyActive ? (
             <div className="mb-3 flex items-center justify-between gap-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
-              <span className="font-medium">This may be urgent — consider using Emergency Mode</span>
+              <span className="font-medium">This may be urgent â€” consider using Emergency Mode</span>
               <Link
                 to="/emergency"
                 className="inline-flex items-center rounded-full bg-critical px-3 py-2 text-xs font-medium text-white transition hover:opacity-90"

@@ -1,0 +1,78 @@
+[33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.[39m
+(node:5636) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/User/Desktop/CareledgerAI/frontend/postcss.config.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\User\Desktop\CareledgerAI\frontend\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[2m7:29:40 PM[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "../assets/illustrations/Appoinment.jpg" from "src/pages/Appointments.jsx". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/Users/User/Desktop/CareledgerAI/frontend/src/pages/Appointments.jsx[39m:19:30
+[33m  33 |  import doctorIllustration from "../assets/illustrations/doctor.svg";
+  34 |  import nurseIllustration from "../assets/illustrations/nurse.svg";
+  35 |  import appointmentBanner from "../assets/illustrations/Appoinment.jpg";
+     |                                 ^
+  36 |  import { API_BASE_URL } from "../lib/api";
+  37 |  const defaultHospitals = [[39m
+      at TransformPluginContext._formatError (file:///C:/Users/User/Desktop/CareledgerAI/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49258:41)
+      at TransformPluginContext.error (file:///C:/Users/User/Desktop/CareledgerAI/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49253:16)
+      at normalizeUrl (file:///C:/Users/User/Desktop/CareledgerAI/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64307:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+      at async file:///C:/Users/User/Desktop/CareledgerAI/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64439:39
+      at async Promise.all (index 7)
+      at async TransformPluginContext.transform (file:///C:/Users/User/Desktop/CareledgerAI/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64366:7)
+      at async PluginContainer.transform (file:///C:/Users/User/Desktop/CareledgerAI/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49099:18)
+      at async loadAndTransform (file:///C:/Users/User/Desktop/CareledgerAI/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:51978:27)
+[2m7:29:40 PM[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "../assets/illustrations/Appoinment.jpg" from "src/pages/Appointments.jsx". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/Users/User/Desktop/CareledgerAI/frontend/src/pages/Appointments.jsx[39m:19:30
+[33m  33 |  import doctorIllustration from "../assets/illustrations/doctor.svg";
+  34 |  import nurseIllustration from "../assets/illustrations/nurse.svg";
+  35 |  import appointmentBanner from "../assets/illustrations/Appoinment.jpg";
+     |                                 ^
+  36 |  import { API_BASE_URL } from "../lib/api";
+  37 |  const defaultHospitals = [[39m
+      at TransformPluginContext._formatError (file:///C:/Users/User/Desktop/CareledgerAI/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49258:41)
+      at TransformPluginContext.error (file:///C:/Users/User/Desktop/CareledgerAI/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49253:16)
+      at normalizeUrl (file:///C:/Users/User/Desktop/CareledgerAI/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64307:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+      at async file:///C:/Users/User/Desktop/CareledgerAI/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64439:39
+      at async Promise.all (index 7)
+      at async TransformPluginContext.transform (file:///C:/Users/User/Desktop/CareledgerAI/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64366:7)
+      at async PluginContainer.transform (file:///C:/Users/User/Desktop/CareledgerAI/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49099:18)
+      at async loadAndTransform (file:///C:/Users/User/Desktop/CareledgerAI/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:51978:27)
+[2m7:29:41 PM[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "../assets/illustrations/Appoinment.jpg" from "src/pages/Appointments.jsx". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/Users/User/Desktop/CareledgerAI/frontend/src/pages/Appointments.jsx[39m:19:30
+[33m  33 |  import doctorIllustration from "../assets/illustrations/doctor.svg";
+  34 |  import nurseIllustration from "../assets/illustrations/nurse.svg";
+  35 |  import appointmentBanner from "../assets/illustrations/Appoinment.jpg";
+     |                                 ^
+  36 |  import { API_BASE_URL } from "../lib/api";
+  37 |  const defaultHospitals = [[39m
+      at TransformPluginContext._formatError (file:///C:/Users/User/Desktop/CareledgerAI/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49258:41)
+      at TransformPluginContext.error (file:///C:/Users/User/Desktop/CareledgerAI/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49253:16)
+      at normalizeUrl (file:///C:/Users/User/Desktop/CareledgerAI/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64307:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+      at async file:///C:/Users/User/Desktop/CareledgerAI/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64439:39
+      at async Promise.all (index 7)
+      at async TransformPluginContext.transform (file:///C:/Users/User/Desktop/CareledgerAI/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64366:7)
+      at async PluginContainer.transform (file:///C:/Users/User/Desktop/CareledgerAI/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49099:18)
+      at async loadAndTransform (file:///C:/Users/User/Desktop/CareledgerAI/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:51978:27)
+[2m7:29:41 PM[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "../assets/illustrations/Appoinment.jpg" from "src/pages/Appointments.jsx". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/Users/User/Desktop/CareledgerAI/frontend/src/pages/Appointments.jsx[39m:19:30
+[33m  33 |  import doctorIllustration from "../assets/illustrations/doctor.svg";
+  34 |  import nurseIllustration from "../assets/illustrations/nurse.svg";
+  35 |  import appointmentBanner from "../assets/illustrations/Appoinment.jpg";
+     |                                 ^
+  36 |  import { API_BASE_URL } from "../lib/api";
+  37 |  const defaultHospitals = [[39m
+      at TransformPluginContext._formatError (file:///C:/Users/User/Desktop/CareledgerAI/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49258:41)
+      at TransformPluginContext.error (file:///C:/Users/User/Desktop/CareledgerAI/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49253:16)
+      at normalizeUrl (file:///C:/Users/User/Desktop/CareledgerAI/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64307:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+      at async file:///C:/Users/User/Desktop/CareledgerAI/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64439:39
+      at async Promise.all (index 7)
+      at async TransformPluginContext.transform (file:///C:/Users/User/Desktop/CareledgerAI/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64366:7)
+      at async PluginContainer.transform (file:///C:/Users/User/Desktop/CareledgerAI/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49099:18)
+      at async loadAndTransform (file:///C:/Users/User/Desktop/CareledgerAI/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:51978:27)
+[2m7:29:41 PM[22m [31m[1m[vite][22m[39m Pre-transform error: Failed to resolve import "../assets/illustrations/Appoinment.jpg" from "src/pages/Appointments.jsx". Does the file exist?

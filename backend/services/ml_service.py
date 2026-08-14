@@ -29,16 +29,31 @@ class MLPredictionService:
         self.model = assets['model']
         self.symptoms: list[str] = assets['symptoms']
         self.diseases: list[str] = assets['diseases']
-        self.symptom_index = {symptom.lower(): index for index, symptom in enumerate(self.symptoms)}
+        self.symptom_index = {self._normalize_symptom(symptom): index for index, symptom in enumerate(self.symptoms)}
+
+    @staticmethod
+    def _normalize_symptom(symptom: str) -> str:
+        # Accept exact checklist values plus human-readable space/hyphen variants.
+        return '_'.join(symptom.strip().lower().replace('-', ' ').split())
+
+    def build_input_vector(self, symptoms: list[str]) -> tuple[np.ndarray, list[str], list[str]]:
+        input_vector = np.zeros(len(self.symptoms), dtype=int)
+        matched: list[str] = []
+        unmatched: list[str] = []
+        for raw_symptom in symptoms:
+            if not raw_symptom or not raw_symptom.strip():
+                continue
+            normalized = self._normalize_symptom(raw_symptom)
+            index = self.symptom_index.get(normalized)
+            if index is None:
+                unmatched.append(raw_symptom)
+            else:
+                input_vector[index] = 1
+                matched.append(self.symptoms[index])
+        return input_vector, sorted(set(matched)), sorted(set(unmatched))
 
     def predict(self, symptoms: list[str]) -> list[dict[str, Any]]:
-        input_vector = np.zeros(len(self.symptoms), dtype=int)
-        normalized_symptoms = {symptom.strip().lower() for symptom in symptoms if symptom and symptom.strip()}
-
-        for symptom in normalized_symptoms:
-            index = self.symptom_index.get(symptom)
-            if index is not None:
-                input_vector[index] = 1
+        input_vector, matched_symptoms, unmatched_symptoms = self.build_input_vector(symptoms)
 
         feature_frame = pd.DataFrame([input_vector], columns=self.symptoms)
         probabilities = self.model.predict_proba(feature_frame)[0]
@@ -48,6 +63,9 @@ class MLPredictionService:
             {
                 'disease': self.model.classes_[index],
                 'ml_probability': float(probabilities[index]),
+                'active_feature_count': int(input_vector.sum()),
+                'matched_input_symptoms': matched_symptoms,
+                'unmatched_input_symptoms': unmatched_symptoms,
             }
             for index in ranked_indices
         ]

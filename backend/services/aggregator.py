@@ -36,7 +36,10 @@ class PredictionAggregator:
             disease = prediction['disease']
             ml_probability = float(prediction['ml_probability'])
             rule_evaluation: RuleEvaluation = rule_engine.evaluate(disease, selected_symptoms, knowledge_base)
-            final_score = round((0.7 * ml_probability) + (0.3 * rule_evaluation.rule_score), 4)
+            # Rules provide supporting evidence but must not dilute a confident
+            # trained-model result merely because the compact knowledge base
+            # lists fewer symptoms than the training dataset.
+            final_score = round(ml_probability + ((1.0 - ml_probability) * 0.3 * rule_evaluation.rule_score), 4)
 
             combined_predictions.append(
                 AggregatedPrediction(

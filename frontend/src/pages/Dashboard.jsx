@@ -10,6 +10,7 @@ import {
   BellAlertIcon
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../context/AuthContext';
+import dashboardBanner from '../assets/illustrations/dashboard.jpeg';
 
 const featureCards = [
   {
@@ -70,26 +71,43 @@ export default function DashboardHome() {
 
   return (
     <div className="space-y-8">
-      <section className="rounded-[28px] border border-border bg-white p-6 shadow-card sm:p-8">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <div className="inline-flex items-center gap-2 rounded-full bg-tealSoft px-4 py-2 text-sm font-medium text-primary">
+      <section className="grid overflow-hidden rounded-[32px] border border-border bg-white shadow-soft lg:grid-cols-[0.9fr_1.1fr]">
+        <div className="flex flex-col justify-center p-6 sm:p-9 lg:p-11">
+            <div className="inline-flex w-fit items-center gap-2 rounded-full bg-tealSoft px-4 py-2 text-sm font-medium text-primary">
               <BellAlertIcon className="h-4 w-4" />
-              Emergency support is always visible in the sidebar
+              Your health, all in one place
             </div>
-            <h2 className="mt-5 text-3xl font-medium tracking-tight text-heading sm:text-4xl">
+            <h2 className="mt-6 text-4xl font-medium tracking-[-0.035em] text-heading sm:text-5xl">
               {getGreeting()}, {name}
             </h2>
-            <p className="mt-3 max-w-2xl text-sm leading-7 text-muted">
-              Welcome to your secure CareLedger AI dashboard. Use the tools below to manage care, planning, and support in one place.
+            <p className="mt-4 max-w-xl text-sm leading-7 text-muted sm:text-base">
+              A calmer way to understand your health, plan care, and stay connected with the support your family needs.
             </p>
+            <div className="mt-7 flex flex-wrap items-center gap-3">
+              <Link
+                to="/assessment"
+                className="inline-flex items-center justify-center rounded-full bg-primary px-6 py-3 text-sm font-medium text-white shadow-soft transition hover:-translate-y-0.5 hover:opacity-90"
+              >
+                Start assessment
+              </Link>
+              <Link to="/appointments" className="inline-flex items-center justify-center rounded-full border border-border bg-white px-6 py-3 text-sm font-medium text-heading transition hover:border-primary/40 hover:bg-slate-50">
+                Book appointment
+              </Link>
+            </div>
+            <div className="mt-8 flex flex-wrap gap-5 text-xs font-medium text-muted">
+              <span className="inline-flex items-center gap-2"><ShieldCheckIcon className="h-4 w-4 text-primary" /> Private & secure</span>
+              <span className="inline-flex items-center gap-2"><SparklesIcon className="h-4 w-4 text-primary" /> AI-powered guidance</span>
+            </div>
+        </div>
+        <div className="relative min-h-[300px] overflow-hidden lg:min-h-[460px]">
+          <img src={dashboardBanner} alt="Doctor caring for a child with his parent" className="absolute inset-0 h-full w-full object-cover object-center" />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/25 via-transparent to-transparent lg:bg-gradient-to-r lg:from-white/20 lg:to-transparent" />
+          <div className="absolute bottom-5 left-5 right-5 rounded-2xl border border-white/30 bg-white/85 p-4 shadow-xl backdrop-blur-md sm:left-auto sm:w-64">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-50 text-primary"><HeartIcon className="h-5 w-5" /></div>
+              <div><div className="text-sm font-semibold text-heading">Care that connects</div><div className="mt-0.5 text-xs text-muted">For you and your family</div></div>
+            </div>
           </div>
-          <Link
-            to="/assessment"
-            className="inline-flex items-center justify-center rounded-full bg-primary px-5 py-3 text-sm font-medium text-white shadow-soft transition hover:opacity-90"
-          >
-            Start assessment
-          </Link>
         </div>
       </section>
 

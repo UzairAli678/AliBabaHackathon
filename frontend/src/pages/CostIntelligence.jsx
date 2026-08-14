@@ -1,14 +1,18 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowRightIcon, SparklesIcon, CurrencyDollarIcon, ShieldCheckIcon } from '@heroicons/react/24/outline';
 import CircularGauge from '../components/CircularGauge';
 import { API_BASE_URL as backendBaseUrl } from '../lib/api';
+import useCareContext from '../store/useCareContext';
 
-const hospitalOptions = [
-  'City General Hospital',
-  'Northside Specialty Center',
-  'Community Care Clinic',
-  'Premium Private Hospital',
-  'Academic Medical Center'
+const treatmentOptions = [
+  'Consultation only',
+  'Consultation and labs',
+  'Consultation and medication',
+  'Minor procedure',
+  'Major procedure/surgery',
+  'Diagnostic imaging (X-ray/MRI/CT)',
+  'Physical therapy',
+  'Emergency treatment'
 ];
 
 const emptyCostForm = {
@@ -58,7 +62,16 @@ function getScoreTone(score) {
 }
 
 export default function CostIntelligencePage() {
-  const [costForm, setCostForm] = useState(emptyCostForm);
+  const latestCareContext = useCareContext((state) => state.latestCareContext);
+  const storedHospital = useCareContext((state) => state.selectedHospital);
+  const [costForm, setCostForm] = useState(() => ({
+    ...emptyCostForm,
+    predicted_disease: latestCareContext?.disease || '',
+    selected_hospital: storedHospital?.id || ''
+  }));
+  const [hospitals, setHospitals] = useState([]);
+  const [hospitalCatalogLoading, setHospitalCatalogLoading] = useState(true);
+  const [hospitalCatalogError, setHospitalCatalogError] = useState('');
   const [costResult, setCostResult] = useState(null);
   const [costLoading, setCostLoading] = useState(false);
   const [costError, setCostError] = useState('');
@@ -67,6 +80,36 @@ export default function CostIntelligencePage() {
   const [affordabilityResult, setAffordabilityResult] = useState(null);
   const [affordabilityLoading, setAffordabilityLoading] = useState(false);
   const [affordabilityError, setAffordabilityError] = useState('');
+  const costResultRef = useRef(null);
+  const affordabilityResultRef = useRef(null);
+
+  useEffect(() => {
+    fetch(`${backendBaseUrl}/medical-cost-intelligence/hospitals`)
+      .then(async (response) => {
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.detail || 'Unable to load hospitals.');
+        const loadedHospitals = Array.isArray(payload.hospitals) ? payload.hospitals : [];
+        setHospitals(loadedHospitals);
+        if (!storedHospital?.id && storedHospital?.name) {
+          const match = loadedHospitals.find((hospital) => hospital.name === storedHospital.name);
+          if (match) setCostForm((current) => ({ ...current, selected_hospital: match.id }));
+        }
+      })
+      .catch((error) => setHospitalCatalogError(error instanceof Error ? error.message : 'Unable to load hospitals.'))
+      .finally(() => setHospitalCatalogLoading(false));
+  }, [storedHospital]);
+
+  useEffect(() => {
+    if (costResult) {
+      requestAnimationFrame(() => costResultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }));
+    }
+  }, [costResult]);
+
+  useEffect(() => {
+    if (affordabilityResult) {
+      requestAnimationFrame(() => affordabilityResultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }));
+    }
+  }, [affordabilityResult]);
 
   const scoreTone = useMemo(() => {
     if (!affordabilityResult) {
@@ -175,8 +218,8 @@ export default function CostIntelligencePage() {
         </div>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[1.02fr_0.98fr]">
-        <section className="rounded-[28px] border border-border bg-white p-6 shadow-card sm:p-8">
+      <div className="grid items-start gap-5 xl:grid-cols-2">
+        <section className="rounded-[28px] border border-border bg-white p-6 shadow-card sm:p-7">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
               <SparklesIcon className="h-5 w-5" />
@@ -203,15 +246,18 @@ export default function CostIntelligencePage() {
               </label>
               <label className="text-sm text-muted">
                 <span className="mb-2 block font-medium text-heading">Treatment type</span>
-                <input
-                  type="text"
+                <select
                   name="treatment_type"
                   value={costForm.treatment_type}
                   onChange={handleCostChange}
-                  placeholder="Consultation and labs"
                   className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-heading outline-none ring-0 focus:border-primary"
                   required
-                />
+                >
+                  <option value="">Choose a treatment type</option>
+                  {treatmentOptions.map((treatment) => (
+                    <option key={treatment} value={treatment}>{treatment}</option>
+                  ))}
+                </select>
               </label>
             </div>
 
@@ -223,13 +269,14 @@ export default function CostIntelligencePage() {
                 onChange={handleCostChange}
                 className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-heading outline-none ring-0 focus:border-primary"
               >
-                <option value="">Choose a hospital tier</option>
-                {hospitalOptions.map((hospital) => (
-                  <option key={hospital} value={hospital}>
-                    {hospital}
+                <option value="">{hospitalCatalogLoading ? 'Loading hospitals...' : 'Choose a hospital'}</option>
+                {hospitals.map((hospital) => (
+                  <option key={hospital.id} value={hospital.id}>
+                    {hospital.name} — {hospital.city}
                   </option>
                 ))}
               </select>
+              {hospitalCatalogError ? <span className="mt-2 block text-sm text-critical">{hospitalCatalogError}</span> : null}
             </label>
 
             <button
@@ -244,7 +291,7 @@ export default function CostIntelligencePage() {
           {costError ? <div className="mt-4 rounded-2xl border border-critical/20 bg-rose-50 px-4 py-3 text-sm text-critical">{costError}</div> : null}
 
           {costResult ? (
-            <div className="mt-6 rounded-[24px] border border-border bg-slate-50 p-5">
+            <div ref={costResultRef} className="mt-5 animate-[pulse_700ms_ease-out_1] scroll-mt-24 rounded-[24px] border border-primary/30 bg-teal-50/40 p-5 shadow-card">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <div className="text-sm font-medium uppercase tracking-[0.2em] text-primary">Estimated range</div>
@@ -253,7 +300,7 @@ export default function CostIntelligencePage() {
                   </h4>
                 </div>
                 <div className="rounded-full bg-white px-4 py-2 text-sm font-medium text-heading shadow-card">
-                  Specialist: {costResult.specialist}
+                  Specialist: {costResult.specialist}{costResult.matched_doctor ? ` · ${costResult.matched_doctor}` : ''}
                 </div>
               </div>
 
@@ -276,7 +323,7 @@ export default function CostIntelligencePage() {
           ) : null}
         </section>
 
-        <section className="rounded-[28px] border border-border bg-white p-6 shadow-card sm:p-8">
+        <section className="rounded-[28px] border border-border bg-white p-6 shadow-card sm:p-7">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-50 text-primary">
               <ShieldCheckIcon className="h-5 w-5" />
@@ -296,7 +343,7 @@ export default function CostIntelligencePage() {
                 min="0"
                 value={affordabilityForm.total_cost_estimate}
                 onChange={handleAffordabilityChange}
-                placeholder="1200"
+                placeholder="e.g. 12000"
                 className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-heading outline-none ring-0 focus:border-primary"
                 required
               />
@@ -311,7 +358,7 @@ export default function CostIntelligencePage() {
                   min="1"
                   value={affordabilityForm.monthly_income}
                   onChange={handleAffordabilityChange}
-                  placeholder="4500"
+                  placeholder="e.g. 45000"
                   className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-heading outline-none ring-0 focus:border-primary"
                   required
                 />
@@ -324,7 +371,7 @@ export default function CostIntelligencePage() {
                   min="0"
                   value={affordabilityForm.existing_savings}
                   onChange={handleAffordabilityChange}
-                  placeholder="300"
+                  placeholder="e.g. 15000"
                   className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-heading outline-none ring-0 focus:border-primary"
                 />
               </label>
@@ -359,7 +406,7 @@ export default function CostIntelligencePage() {
           {affordabilityError ? <div className="mt-4 rounded-2xl border border-critical/20 bg-rose-50 px-4 py-3 text-sm text-critical">{affordabilityError}</div> : null}
 
           {affordabilityResult ? (
-            <div className="mt-6 space-y-5">
+            <div ref={affordabilityResultRef} className="mt-5 animate-[pulse_700ms_ease-out_1] scroll-mt-24 space-y-5 rounded-[28px] ring-2 ring-primary/10">
               <div className="flex flex-col items-center gap-4 rounded-[28px] border border-border bg-slate-50 px-6 py-6 text-center">
                 <CircularGauge
                   value={affordabilityResult.affordability_score}

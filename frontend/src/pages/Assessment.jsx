@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon, ArrowRightIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import CircularGauge from '../components/CircularGauge';
+import useCareContext from '../store/useCareContext';
 
 const assessmentQuestions = [
   {
@@ -160,6 +161,7 @@ function buildAssessmentResult(answers) {
 
 export default function AssessmentPage() {
   const navigate = useNavigate();
+  const setLatestCareContext = useCareContext((state) => state.setLatestCareContext);
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState({});
   const [result, setResult] = useState(null);
@@ -167,7 +169,9 @@ export default function AssessmentPage() {
   const totalSteps = assessmentQuestions.length;
   const currentQuestion = assessmentQuestions[currentStep];
   const selectedValue = answers[currentQuestion.id] || '';
-  const progressPercent = Math.round(((currentStep + 1) / totalSteps) * 100);
+  // Progress represents questions the user has completed, not the question
+  // currently being displayed. The first question therefore starts at 0%.
+  const progressPercent = Math.round((currentStep / totalSteps) * 100);
   const isFinalStep = currentStep === totalSteps - 1;
 
   const selectedAnswer = useMemo(() => {
@@ -188,6 +192,11 @@ export default function AssessmentPage() {
       topDisease: 'Quick check-in summary'
     };
   }, [result]);
+
+  const saveAssessmentContext = () => {
+    if (!assessmentPayload) return;
+    setLatestCareContext({ disease: assessmentPayload.topDisease, specialist: 'General Physician', riskLevel: assessmentPayload.riskLevel, confidence: assessmentPayload.score, symptoms: assessmentPayload.symptoms, source: 'Health Assessment' });
+  };
 
   const handleOptionSelect = (option) => {
     setAnswers((current) => ({
@@ -271,7 +280,7 @@ export default function AssessmentPage() {
                   </Link>
                   <button
                     type="button"
-                    onClick={() => navigate('/navigator', { state: { assessment: assessmentPayload } })}
+                    onClick={() => { saveAssessmentContext(); navigate('/navigator', { state: { assessment: assessmentPayload } }); }}
                     className="inline-flex items-center justify-center rounded-full border border-border bg-white px-5 py-3 text-sm font-medium text-heading transition hover:bg-slate-50"
                   >
                     View care options
@@ -292,6 +301,7 @@ export default function AssessmentPage() {
               <Link
                 to="/navigator"
                 state={{ assessment: assessmentPayload }}
+                onClick={saveAssessmentContext}
                 className="inline-flex items-center justify-center rounded-full bg-primary px-5 py-3 text-sm font-medium text-white shadow-soft transition hover:opacity-90"
               >
                 View care options
