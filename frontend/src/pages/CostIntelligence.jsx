@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowRightIcon, SparklesIcon, CurrencyDollarIcon, ShieldCheckIcon } from '@heroicons/react/24/outline';
+import { ArrowRightIcon, SparklesIcon, ShieldCheckIcon } from '@heroicons/react/24/outline';
 import CircularGauge from '../components/CircularGauge';
+import costIntelligenceHero from '../assets/illustrations/cost-intelligence-hero.png';
 import { API_BASE_URL as backendBaseUrl } from '../lib/api';
 import useCareContext from '../store/useCareContext';
 
@@ -198,23 +199,18 @@ export default function CostIntelligencePage() {
 
   return (
     <section className="space-y-6">
-      <div className="rounded-[28px] border border-border bg-white p-6 shadow-card sm:p-8">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-2xl">
-            <div className="inline-flex items-center gap-2 rounded-full bg-tealSoft px-4 py-2 text-sm font-medium text-primary">
-              <CurrencyDollarIcon className="h-4 w-4" />
-              Finance Module
-            </div>
-            <h2 className="mt-5 text-3xl font-medium tracking-tight text-heading sm:text-4xl">Cost Intelligence</h2>
-            <p className="mt-3 text-sm leading-7 text-muted">
-              Estimate likely care costs first, then check whether the plan feels manageable against monthly income,
-              savings, and insurance coverage.
-            </p>
-          </div>
-          <div className="rounded-3xl bg-slate-50 px-5 py-4 text-sm leading-7 text-heading">
-            <div className="font-medium text-heading">Merged flow</div>
-            <p className="mt-1 text-muted">Step 1: cost breakdown. Step 2: affordability check on the same page.</p>
-          </div>
+      <div className="group relative isolate overflow-hidden rounded-[28px] border border-cyan-100 bg-white shadow-[0_24px_70px_-30px_rgba(8,145,178,0.45)]">
+        <div className="h-44 w-full overflow-hidden bg-gradient-to-br from-white via-cyan-50 to-teal-100 sm:h-52 lg:h-64 xl:h-72">
+          <img
+            src={costIntelligenceHero}
+            alt="CareLedger AI cost intelligence overview with cost breakdown and affordability tools"
+            className="h-full w-full object-cover object-center transition duration-700 ease-out group-hover:scale-[1.015]"
+          />
+        </div>
+        <div className="pointer-events-none absolute inset-0 rounded-[28px] ring-1 ring-inset ring-white/70" />
+        <div className="absolute bottom-3 right-3 hidden items-center gap-2 rounded-full border border-white/70 bg-white/80 px-4 py-2 text-xs font-semibold tracking-wide text-heading shadow-lg backdrop-blur-md sm:flex lg:bottom-5 lg:right-5 lg:text-sm">
+          <span className="h-2 w-2 rounded-full bg-teal-500 shadow-[0_0_0_4px_rgba(20,184,166,0.14)]" />
+          Estimate · Compare · Plan
         </div>
       </div>
 

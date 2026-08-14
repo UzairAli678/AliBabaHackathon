@@ -234,25 +234,25 @@ export default function AppointmentsPage() {
 
   return (
     <div className="space-y-8">
-      <section className="relative min-h-[360px] overflow-hidden rounded-[32px] border border-slate-200 shadow-soft sm:min-h-[430px] lg:min-h-[500px]">
+      <section className="relative h-44 overflow-hidden rounded-[28px] border border-slate-200 shadow-soft sm:h-52 lg:h-64 xl:h-72">
         <img
           src={appointmentBanner}
           alt="Doctor discussing care with a patient"
           className="absolute inset-0 h-full w-full object-cover object-center"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-900/65 to-slate-900/5" />
-        <div className="relative flex min-h-[360px] flex-col justify-end p-6 sm:min-h-[430px] sm:p-9 lg:min-h-[500px] lg:p-12">
-          <div className="inline-flex w-fit items-center gap-2 rounded-full border border-white/20 bg-white/15 px-4 py-2 text-sm font-medium text-white backdrop-blur-md">
+        <div className="relative flex h-full flex-col justify-end p-4 sm:p-6 lg:p-8">
+          <div className="inline-flex w-fit items-center gap-2 rounded-full border border-white/20 bg-white/15 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-md sm:px-4 sm:py-2 sm:text-sm">
             <CalendarDaysIcon className="h-4 w-4" />
             Simple, secure booking
           </div>
-          <h1 className="mt-5 max-w-xl text-4xl font-medium tracking-[-0.035em] text-white sm:text-5xl lg:text-6xl">
+          <h1 className="mt-3 max-w-xl text-2xl font-medium tracking-[-0.035em] text-white sm:text-3xl lg:text-4xl">
             Better care starts with the right appointment.
           </h1>
-          <p className="mt-4 max-w-xl text-sm leading-7 text-white/85 sm:text-base lg:leading-8">
+          <p className="mt-2 hidden max-w-xl text-sm leading-6 text-white/85 sm:block">
             Choose a trusted hospital, find the right specialist, and reserve a time that works for you—all in one clear flow.
           </p>
-          <a href="#book-appointment" className="mt-7 inline-flex w-fit items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-900 shadow-lg transition hover:-translate-y-0.5 hover:bg-teal-50">
+          <a href="#book-appointment" className="mt-3 hidden w-fit items-center gap-2 rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-900 shadow-lg transition hover:-translate-y-0.5 hover:bg-teal-50 lg:inline-flex">
             Book an appointment
             <CalendarDaysIcon className="h-4 w-4" />
           </a>
