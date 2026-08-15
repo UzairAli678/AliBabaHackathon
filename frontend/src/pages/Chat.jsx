@@ -23,7 +23,7 @@ function createWelcomeMessage(name) {
   };
 }
 
-function TypingIndicator() {
+function TypingIndicator({ wakingUp }) {
   return (
     <div className="flex items-start gap-3">
       <div className="mt-1 flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-white shadow-soft">
@@ -38,7 +38,7 @@ function TypingIndicator() {
             <span className="chat-typing-dot h-2.5 w-2.5 rounded-full bg-primary/50" />
           </div>
         </div>
-        <span className="mt-1 block text-xs text-muted">Thinking...</span>
+        <span className="mt-1 block text-xs text-muted">{wakingUp ? 'The secure service is waking up. This can take up to a minute on the first message...' : 'Thinking...'}</span>
       </div>
     </div>
   );
@@ -86,6 +86,7 @@ export default function ChatPage() {
   const [messages, setMessages] = useState(() => [createWelcomeMessage(firstName)]);
   const [draft, setDraft] = useState('');
   const [loading, setLoading] = useState(false);
+  const [wakingUp, setWakingUp] = useState(false);
   const [error, setError] = useState('');
   const scrollAreaRef = useRef(null);
   const bottomRef = useRef(null);
@@ -111,8 +112,11 @@ export default function ChatPage() {
 
     setDraft('');
     setLoading(true);
+    setWakingUp(false);
     setError('');
     setMessages((currentMessages) => [...currentMessages, userMessage]);
+
+    const wakeUpTimer = window.setTimeout(() => setWakingUp(true), 8000);
 
     try {
       const response = await sendChatMessage(trimmedMessage, conversationHistory, firstName);
@@ -126,6 +130,8 @@ export default function ChatPage() {
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : 'Unable to send message right now.');
     } finally {
+      window.clearTimeout(wakeUpTimer);
+      setWakingUp(false);
       setLoading(false);
     }
   };
@@ -182,7 +188,7 @@ export default function ChatPage() {
               </div>
             ) : null}
 
-            {loading ? <TypingIndicator /> : null}
+            {loading ? <TypingIndicator wakingUp={wakingUp} /> : null}
             <div ref={bottomRef} />
           </div>
 

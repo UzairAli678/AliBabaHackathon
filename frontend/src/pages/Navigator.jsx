@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { CalendarDaysIcon, MapPinIcon, StarIcon } from '@heroicons/react/24/outline';
+import { CalendarDaysIcon, ExclamationTriangleIcon, MapPinIcon, StarIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { API_BASE_URL } from '../lib/api';
 import useCareContext from '../store/useCareContext';
 
@@ -9,6 +9,8 @@ const formatPKR = (value) => new Intl.NumberFormat('en-PK', {
   currency: 'PKR',
   maximumFractionDigits: 0
 }).format(value || 0);
+
+const URGENT_CONDITION_PATTERN = /\b(heart attack|cardiac arrest|stroke|meningitis|pulmonary embolism|sepsis|anaphylaxis|severe asthma)\b/i;
 
 export default function NavigatorPage() {
   const location = useLocation();
@@ -27,9 +29,19 @@ export default function NavigatorPage() {
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
   const [selectedHospitalId, setSelectedHospitalId] = useState('');
+  const [warningDismissed, setWarningDismissed] = useState(false);
+
+  const isCriticalQuickCheck = careContext?.source === 'Health Assessment'
+    && String(careContext?.riskLevel).toLowerCase() === 'critical';
+  const shouldShowAttentionWarning = careContext?.source === 'Disease Prediction'
+    && (URGENT_CONDITION_PATTERN.test(careContext?.disease || '') || Number(careContext?.confidence) >= 75);
 
   useEffect(() => {
-    if (careContext && ['high', 'critical', 'urgent'].includes(String(careContext.riskLevel).toLowerCase())) {
+    setWarningDismissed(false);
+  }, [careContext?.disease, careContext?.confidence]);
+
+  useEffect(() => {
+    if (isCriticalQuickCheck) {
       navigate('/emergency', { replace: true });
       return;
     }
@@ -51,7 +63,7 @@ export default function NavigatorPage() {
         rememberSelectedHospital({ id: payload.featured_hospital.id, name: payload.featured_hospital.name });
       }
     }).catch((requestError) => setError(requestError.message));
-  }, [careContext?.disease, careContext?.specialist, careContext?.riskLevel, navigate, rememberSelectedHospital]);
+  }, [careContext?.disease, careContext?.specialist, careContext?.riskLevel, isCriticalQuickCheck, navigate, rememberSelectedHospital]);
 
   const rememberBookingHandoff = (hospital, doctor) => {
     rememberSelectedHospital({ id: hospital.id, name: hospital.name });
@@ -103,6 +115,24 @@ export default function NavigatorPage() {
 
   return (
     <div className="space-y-6">
+      {shouldShowAttentionWarning && !warningDismissed ? (
+        <section className="flex flex-col gap-4 rounded-[24px] border border-amber-300 bg-amber-50 p-5 text-amber-950 shadow-card sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3">
+            <ExclamationTriangleIcon className="mt-0.5 h-6 w-6 shrink-0 text-amber-700" />
+            <div>
+              <h2 className="font-semibold">Prompt medical attention may be appropriate</h2>
+              <p className="mt-1 text-sm leading-6 text-amber-900">This condition may require prompt medical attention — consider Emergency Mode if symptoms are severe or worsening.</p>
+            </div>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <Link to="/emergency" className="inline-flex rounded-full bg-critical px-4 py-2.5 text-sm font-medium text-white">Emergency Mode</Link>
+            <button type="button" onClick={() => setWarningDismissed(true)} aria-label="Dismiss medical attention warning" className="inline-flex h-10 w-10 items-center justify-center rounded-full text-amber-800 transition hover:bg-amber-100">
+              <XMarkIcon className="h-5 w-5" />
+            </button>
+          </div>
+        </section>
+      ) : null}
+
       <section className="rounded-[28px] border border-primary/20 bg-white p-6 shadow-card sm:p-8">
         <div className="text-sm font-medium uppercase tracking-[0.2em] text-primary">Based on your recent assessment</div>
         <h2 className="mt-3 text-3xl font-medium text-heading">{careContext.disease} — Recommended: {careContext.specialist}</h2>
