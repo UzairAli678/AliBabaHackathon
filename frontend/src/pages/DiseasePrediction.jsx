@@ -263,7 +263,8 @@ export default function DiseasePredictionPage() {
         followUpQuestions: data.follow_up_questions || [],
         confidenceThresholdMet: Boolean(data.confidence_threshold_met),
         urgent: Boolean(data.emergency),
-        urgentWarning: data.urgent_warning || data.message || ''
+        urgentWarning: data.urgent_warning || data.message || '',
+        completedAt: new Date().toISOString()
       };
       setResult(nextResult);
       const primaryPrediction = predictions[0];

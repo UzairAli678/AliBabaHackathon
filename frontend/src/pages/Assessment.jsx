@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon, ArrowRightIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import CircularGauge from '../components/CircularGauge';
@@ -155,16 +155,24 @@ function buildAssessmentResult(answers) {
   return {
     score,
     ...severityResult,
-    answers: answerEntries
+    answers: answerEntries,
+    completedAt: new Date().toISOString()
   };
 }
 
 export default function AssessmentPage() {
   const navigate = useNavigate();
   const setLatestCareContext = useCareContext((state) => state.setLatestCareContext);
+  const savedAssessmentSession = useCareContext((state) => state.healthAssessmentSession);
+  const setHealthAssessmentSession = useCareContext((state) => state.setHealthAssessmentSession);
+  const clearHealthAssessmentSession = useCareContext((state) => state.clearHealthAssessmentSession);
   const [currentStep, setCurrentStep] = useState(0);
-  const [answers, setAnswers] = useState({});
-  const [result, setResult] = useState(null);
+  const [answers, setAnswers] = useState(() => savedAssessmentSession?.answers || {});
+  const [result, setResult] = useState(() => savedAssessmentSession?.result || null);
+
+  useEffect(() => {
+    setHealthAssessmentSession({ answers, result });
+  }, [answers, result, setHealthAssessmentSession]);
 
   const totalSteps = assessmentQuestions.length;
   const currentQuestion = assessmentQuestions[currentStep];
@@ -223,6 +231,7 @@ export default function AssessmentPage() {
   };
 
   const handleRestart = () => {
+    clearHealthAssessmentSession();
     setCurrentStep(0);
     setAnswers({});
     setResult(null);

@@ -22,6 +22,7 @@ import {
 } from '@heroicons/react/24/outline';
 import LogoMark from '../components/LogoMark';
 import { useAuth } from '../context/AuthContext';
+import useCareContext from '../store/useCareContext';
 
 const sidebarNavItems = [
   { label: 'Dashboard', to: '/dashboard', icon: HomeIcon },
@@ -54,6 +55,7 @@ export default function DashboardLayout() {
   });
   const [menuOpen, setMenuOpen] = useState(false);
   const { user, signOut, profileImage } = useAuth();
+  const clearCareHistory = useCareContext((state) => state.clearCareHistory);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -64,6 +66,7 @@ export default function DashboardLayout() {
   const pageTitle = getPageTitle(location.pathname);
 
   const handleLogOut = async () => {
+    clearCareHistory();
     await signOut();
     navigate('/');
   };

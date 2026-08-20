@@ -20,3 +20,11 @@ INFO:     127.0.0.1:59719 - "POST /ai-chat/message HTTP/1.1" 200 OK
 INFO:     127.0.0.1:59868 - "OPTIONS /ai-chat/message HTTP/1.1" 200 OK
 INFO:     127.0.0.1:59868 - "POST /ai-chat/message HTTP/1.1" 200 OK
 INFO:     127.0.0.1:59934 - "POST /ai-chat/message HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60076 - "GET /health-assessment/symptoms-list HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60076 - "GET /health-assessment/symptoms-list HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60078 - "OPTIONS /health-assessment/predict-disease HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60078 - "POST /health-assessment/predict-disease HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60078 - "OPTIONS /smart-care-navigator/personalized HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60079 - "OPTIONS /smart-care-navigator/personalized HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60080 - "POST /smart-care-navigator/personalized HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60078 - "POST /smart-care-navigator/personalized HTTP/1.1" 200 OK

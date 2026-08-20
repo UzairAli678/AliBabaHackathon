@@ -34,6 +34,17 @@ import ResetPasswordPage from './pages/ResetPasswordPage';
 import CostIntelligencePage from './pages/CostIntelligence';
 import AppointmentsPage from './pages/Appointments';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import useCareContext from './store/useCareContext';
+import healthAssessmentImage from './assets/illustrations/Health assessment selected.jpg.jpeg';
+import diseasePredictionImage from './assets/illustrations/Disease prediction selected.png';
+import careNavigatorImage from './assets/illustrations/care navigator selected.png';
+import costIntelligenceImage from './assets/illustrations/cost intelligence selected.png';
+import treatmentAffordabilityImage from './assets/illustrations/Treatment affordability selected.jpg.jpeg';
+import appointmentsImage from './assets/illustrations/Appointments selected.jpg.jpeg';
+import aiChatImage from './assets/illustrations/Ai chat selected.png';
+import healthRoadmapImage from './assets/illustrations/Health roadmap selected.jpg.jpeg';
+import homePageVideo from './assets/illustrations/Home page video.mp4';
+import dashboardPoster from './assets/illustrations/dashboard.jpeg';
 
 const navItems = [
   { label: 'Home', to: '/', icon: HomeIcon },
@@ -48,6 +59,7 @@ const features = [
     description: 'Capture symptoms and get structured next-step guidance.',
     icon: HeartIcon,
     tint: 'bg-teal-50',
+    image: healthAssessmentImage,
     href: '/assessment'
   },
   {
@@ -55,6 +67,7 @@ const features = [
     description: 'Search symptoms and see likely conditions from the AI model.',
     icon: BeakerIcon,
     tint: 'bg-violet-50',
+    image: diseasePredictionImage,
     href: '/disease-prediction'
   },
   {
@@ -62,6 +75,7 @@ const features = [
     description: 'Get calm, practical guidance on the right next step for symptoms and follow-up care.',
     icon: SparklesIcon,
     tint: 'bg-teal-50',
+    image: careNavigatorImage,
     href: '/navigator'
   },
   {
@@ -69,6 +83,7 @@ const features = [
     description: 'Review transparent estimates and compare options before you commit to care.',
     icon: WalletIcon,
     tint: 'bg-amber-50',
+    image: costIntelligenceImage,
     href: '/cost'
   },
   {
@@ -76,6 +91,7 @@ const features = [
     description: 'Track affordability and make care plans easier to manage.',
     icon: ShieldCheckIcon,
     tint: 'bg-emerald-50',
+    image: treatmentAffordabilityImage,
     href: '/affordability'
   },
   {
@@ -83,6 +99,7 @@ const features = [
     description: 'Keep your visits organized in one place.',
     icon: CalendarDaysIcon,
     tint: 'bg-slate-50',
+    image: appointmentsImage,
     href: '/appointments'
   },
   {
@@ -90,6 +107,7 @@ const features = [
     description: 'Ask follow-up questions and get quick support.',
     icon: ChatBubbleLeftRightIcon,
     tint: 'bg-cyan-50',
+    image: aiChatImage,
     href: '/chat'
   },
   {
@@ -97,6 +115,7 @@ const features = [
     description: 'Follow your care plan and milestones over time.',
     icon: SparklesIcon,
     tint: 'bg-sky-50',
+    image: healthRoadmapImage,
     href: '/roadmap'
   }
 ];
@@ -107,23 +126,37 @@ const stats = [
   { value: 'Trusted', label: 'clinical style' }
 ];
 
-function IconCard({ icon: Icon, title, description, tint, href }) {
+function IconCard({ icon: Icon, title, description, tint, href, image }) {
   return (
-    <div className="rounded-2xl border border-border bg-card p-6 shadow-card transition-transform duration-200 hover:-translate-y-1">
-      <div className={`mb-5 inline-flex h-12 w-12 items-center justify-center rounded-2xl ${tint}`}>
-        <Icon className="h-6 w-6 text-primary" />
+    <NavLink
+      to={href}
+      className="group relative min-h-[390px] overflow-hidden rounded-[28px] border border-border bg-heading shadow-card transition duration-300 hover:-translate-y-1.5 hover:shadow-soft"
+    >
+      <img
+        src={image}
+        alt=""
+        loading="lazy"
+        className="absolute inset-0 h-full w-full object-cover object-center transition duration-500 group-hover:scale-[1.03]"
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/35 to-transparent" />
+      <div className="relative flex min-h-[390px] flex-col justify-end p-6 sm:p-7">
+        <div className={`inline-flex h-12 w-12 items-center justify-center rounded-2xl ${tint} shadow-lg ring-1 ring-white/50`}>
+          <Icon className="h-6 w-6 text-primary" />
+        </div>
+        <h3 className="mt-4 text-2xl font-medium tracking-tight text-white">{title}</h3>
+        <p className="mt-2 max-w-md text-sm leading-6 text-white/80">{description}</p>
+        <span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-white">
+          Explore feature
+          <ArrowRightIcon className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+        </span>
       </div>
-      <h3 className="text-lg font-medium tracking-tight text-heading">{title}</h3>
-      <p className="mt-3 text-sm leading-7 text-muted">{description}</p>
-      <NavLink className="mt-5 inline-flex text-sm font-medium text-primary hover:underline" to={href}>
-        Learn more
-      </NavLink>
-    </div>
+    </NavLink>
   );
 }
 
 function NavAuthActions() {
   const { user, signOut } = useAuth();
+  const clearCareHistory = useCareContext((state) => state.clearCareHistory);
   const navigate = useNavigate();
 
   if (!user) {
@@ -163,6 +196,7 @@ function NavAuthActions() {
       <button
         type="button"
         onClick={async () => {
+          clearCareHistory();
           await signOut();
           navigate('/');
         }}
@@ -295,16 +329,31 @@ function HomePage() {
 
   return (
     <main>
-      <section className="mx-auto grid max-w-7xl gap-12 px-4 py-16 sm:px-6 lg:grid-cols-[1.15fr_0.85fr] lg:px-8 lg:py-20">
-        <div className="flex flex-col justify-center">
-          <div className="inline-flex w-fit items-center gap-2 rounded-full bg-tealSoft px-4 py-2 text-sm font-medium text-primary">
+      <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
+        <div className="relative isolate min-h-[620px] overflow-hidden rounded-[32px] border border-border bg-heading shadow-soft">
+          <video
+            className="absolute inset-0 h-full w-full object-cover object-center"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            poster={dashboardPoster}
+            onLoadedMetadata={(event) => { event.currentTarget.playbackRate = 0.6; }}
+            aria-hidden="true"
+          >
+            <source src={homePageVideo} type="video/mp4" />
+          </video>
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-950/75 to-slate-950/30" />
+          <div className="relative flex min-h-[620px] max-w-3xl flex-col justify-center p-7 sm:p-12 lg:p-16">
+          <div className="inline-flex w-fit items-center gap-2 rounded-full border border-white/20 bg-white/15 px-4 py-2 text-sm font-medium text-white backdrop-blur-md">
             <ShieldCheckIcon className="h-4 w-4" />
             Trusted guidance for better care planning
           </div>
-          <h1 className="mt-6 max-w-2xl text-4xl font-medium tracking-tight text-heading sm:text-5xl lg:text-6xl">
+          <h1 className="mt-6 max-w-2xl text-4xl font-medium tracking-tight text-white sm:text-5xl lg:text-6xl">
             Your health, understood and planned
           </h1>
-          <p className="mt-6 max-w-xl text-lg leading-8 text-muted">
+          <p className="mt-6 max-w-xl text-lg leading-8 text-white/80">
             CareLedger AI brings calm symptom guidance, transparent cost intelligence, and structured care planning into one polished hospital-style experience.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-4">
@@ -316,7 +365,7 @@ function HomePage() {
             </NavLink>
             <NavLink
               to="/navigator"
-              className="inline-flex items-center rounded-full border border-border bg-white px-6 py-3.5 text-sm font-medium text-heading transition hover:bg-slate-50"
+              className="inline-flex items-center rounded-full border border-white/30 bg-white/15 px-6 py-3.5 text-sm font-medium text-white backdrop-blur-md transition hover:bg-white/25"
             >
               Open care navigator
             </NavLink>
@@ -324,52 +373,23 @@ function HomePage() {
 
           <div className="mt-10 grid gap-4 sm:grid-cols-3">
             {stats.map((stat) => (
-              <div key={stat.label} className="rounded-2xl border border-border bg-white px-4 py-4 shadow-card">
-                <div className="text-2xl font-medium text-heading">{stat.value}</div>
-                <div className="mt-1 text-sm text-muted">{stat.label}</div>
+              <div key={stat.label} className="rounded-2xl border border-white/20 bg-slate-950/35 px-4 py-4 shadow-card backdrop-blur-md">
+                <div className="text-2xl font-medium text-white">{stat.value}</div>
+                <div className="mt-1 text-sm text-white/70">{stat.label}</div>
               </div>
             ))}
           </div>
-        </div>
-
-        <div className="relative overflow-hidden rounded-[32px] border border-border bg-gradient-to-br from-teal-50 via-white to-slate-50 p-8 shadow-soft">
-          <div className="absolute right-8 top-8 h-28 w-28 rounded-full bg-primary/10 blur-2xl" />
-          <div className="absolute bottom-8 left-8 h-24 w-24 rounded-full bg-emerald-200/40 blur-2xl" />
-          <div className="relative space-y-5">
-            <div className="rounded-3xl border border-white/80 bg-white/85 p-5 shadow-card backdrop-blur">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-sm text-muted">Current care status</div>
-                  <div className="mt-1 text-2xl font-medium text-heading">Stable and improving</div>
-                </div>
-                <div className="rounded-2xl bg-emerald-50 px-3 py-2 text-sm font-medium text-positive">+12%</div>
-              </div>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="rounded-3xl bg-white p-5 shadow-card">
-                <div className="text-sm text-muted">Symptom review</div>
-                <div className="mt-2 text-3xl font-medium text-heading">AI guided</div>
-                <div className="mt-2 text-sm leading-6 text-muted">Structured prompts help you share what matters most.</div>
-              </div>
-              <div className="rounded-3xl bg-white p-5 shadow-card">
-                <div className="text-sm text-muted">Estimated clarity</div>
-                <div className="mt-2 text-3xl font-medium text-heading">High</div>
-                <div className="mt-2 text-sm leading-6 text-muted">Understand treatment costs before decisions are made.</div>
-              </div>
-            </div>
-            <div className="rounded-3xl bg-primary p-6 text-white shadow-soft">
-              <div className="text-sm/6 text-white/80">Care plan summary</div>
-              <div className="mt-2 text-2xl font-medium tracking-tight">Next best step generated in seconds</div>
-              <div className="mt-3 max-w-md text-sm leading-7 text-white/85">
-                A calm, hospital-style experience designed to reduce uncertainty and improve follow-through.
-              </div>
-            </div>
           </div>
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
-        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+      <section className="mx-auto max-w-7xl px-4 py-10 pb-24 sm:px-6 lg:px-8 lg:py-16 lg:pb-32">
+        <div className="mb-10 max-w-2xl">
+          <div className="text-sm font-medium uppercase tracking-[0.2em] text-primary">Everything connected</div>
+          <h2 className="mt-3 text-3xl font-medium tracking-tight text-heading sm:text-4xl">Explore your complete care toolkit</h2>
+          <p className="mt-4 text-sm leading-7 text-muted">From a first symptom check to long-term planning, every module is designed to make the next step clearer.</p>
+        </div>
+        <div className="grid gap-8 md:grid-cols-2">
           {features.map((feature) => (
             <IconCard key={feature.title} {...feature} />
           ))}
@@ -442,6 +462,7 @@ function AppRoutes() {
         <Route path="/cost" element={<CostIntelligencePage />} />
         <Route path="/appointments" element={<AppointmentsPage />} />
         <Route path="/chat" element={<ChatPage />} />
+        <Route path="/affordability" element={<DashboardFeaturePage title="Treatment Affordability" />} />
         <Route path="/roadmap" element={<DashboardFeaturePage title="Roadmap" />} />
         <Route path="/profile" element={<ProfilePage />} />
       </Route>

@@ -68,6 +68,7 @@ function getAppointmentTypeTone(type) {
 export default function AppointmentsPage() {
   const location = useLocation();
   const storedAppointmentSelection = useCareContext((state) => state.appointmentSelection);
+  const setLastBookedAppointment = useCareContext((state) => state.setLastBookedAppointment);
   const pendingSelection = location.state?.appointmentSelection || storedAppointmentSelection;
   const [hospitals, setHospitals] = useState([]);
   const [doctors, setDoctors] = useState([]);
@@ -223,8 +224,10 @@ export default function AppointmentsPage() {
         throw new Error(data?.detail || 'Unable to book appointment.');
       }
 
-      setSuccessBooking(data);
-      setBookings((current) => [data, ...current]);
+      const completedBooking = { ...data, bookedAt: new Date().toISOString() };
+      setSuccessBooking(completedBooking);
+      setBookings((current) => [completedBooking, ...current]);
+      setLastBookedAppointment(completedBooking);
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : 'Unable to book appointment.');
     } finally {
